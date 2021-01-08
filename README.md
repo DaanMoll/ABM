@@ -15,6 +15,7 @@ Spread of fires
   - https://www.comses.net/codebases/5266/
   
 4. Consumer behavior / Markets / Game theory
+- Many examples, possible to validate
 
 5. Human-in-the-loop Experiment of the Strategic Coalition Formation using the glove game
 https://www.comses.net/codebases/3039b5b4-9a52-4195-a444-0a3a87ef229d/releases/2.5.0/
