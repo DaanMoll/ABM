@@ -23,3 +23,6 @@ https://www.comses.net/codebases/3039b5b4-9a52-4195-a444-0a3a87ef229d/releases/2
 https://arxiv.org/abs/2009.00519
 
 Bonus: Animal Behaviour -> cute character models
+6. A model on feeding and social interaction behaviour of pigs
+https://www.comses.net/codebases/5628/releases/1.1.0/
+Boumans, I. J. M. M., I. J. M. De Boer, G. J. Hofstede, and E. A. M. Bokkers. (2017). How social factors and behavioural strategies affect feeding and social interaction patterns of pigs in an agent-based model.
