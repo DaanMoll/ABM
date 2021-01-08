@@ -6,7 +6,7 @@ IDEAS:
 1. Diffusion - Social science
 http://hashkat.org/ #software for ABM
 https://arxiv.org/pdf/1611.07454.pdf # lit 
-Spread of fires: http://ccl.northwestern.edu/netlogo/models/Fire
+
 
 2. Traffic models
   - Bycicle model -> https://www.comses.net/codebases/768182a3-eb7c-4d93-9c27-c42d878bb2ea/releases/1.0.0/
@@ -35,3 +35,5 @@ Bonus: Animal Behaviour -> cute character models
 8. A model on feeding and social interaction behaviour of pigs
 https://www.comses.net/codebases/5628/releases/1.1.0/
 Boumans, I. J. M. M., I. J. M. De Boer, G. J. Hofstede, and E. A. M. Bokkers. (2017). How social factors and behavioural strategies affect feeding and social interaction patterns of pigs in an agent-based model.
+
+9. Spread of fires: http://ccl.northwestern.edu/netlogo/models/Fire
