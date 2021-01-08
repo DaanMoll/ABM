@@ -3,7 +3,8 @@ Project and assignments
 
 IDEAS:
 
-1. Diffusion - Social science
+1. Diffusion - Social science  
+it is a dynamic network simulation tool designed to model the growth of and information propagation through an online social network. It is an agent-based, Kinetic Monte Carlo engine capable of simulating online networks such as Facebook, Twitter, LinkedIn, etc.
 http://hashkat.org/ #software for ABM
 https://arxiv.org/pdf/1611.07454.pdf # lit 
 
