@@ -22,6 +22,10 @@ Spread of fires: http://ccl.northwestern.edu/netlogo/models/Fire
 https://www.comses.net/codebases/3039b5b4-9a52-4195-a444-0a3a87ef229d/releases/2.5.0/
 https://arxiv.org/abs/2009.00519
 
+6. Model analyzes skill inequality between children at different ages that results from differences in parental investment behavior
+https://www.comses.net/codebases/4084/releases/1.0.0/
+http://jasss.soc.surrey.ac.uk/17/4/8.html
+
 Bonus: Animal Behaviour -> cute character models
 
 6. A model on feeding and social interaction behaviour of pigs
