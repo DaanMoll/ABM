@@ -26,8 +26,12 @@ https://arxiv.org/abs/2009.00519
 https://www.comses.net/codebases/4084/releases/1.0.0/
 http://jasss.soc.surrey.ac.uk/17/4/8.html
 
+7. Vigilant sharing in a small-scale society
+"explores food distribution patterns that emerge in a small-scale non-agricultural group when sharing"
+https://www.comses.net/codebases/e9592c9f-7c27-49ab-a7d0-3650bd86eec2/releases/1.0.1/
+
 Bonus: Animal Behaviour -> cute character models
 
-7. A model on feeding and social interaction behaviour of pigs
+8. A model on feeding and social interaction behaviour of pigs
 https://www.comses.net/codebases/5628/releases/1.1.0/
 Boumans, I. J. M. M., I. J. M. De Boer, G. J. Hofstede, and E. A. M. Bokkers. (2017). How social factors and behavioural strategies affect feeding and social interaction patterns of pigs in an agent-based model.
