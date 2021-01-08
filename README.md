@@ -13,4 +13,6 @@ Spread of fires
   
 3. Segregation / Inequality Acceptance
   - https://www.comses.net/codebases/5266/
+  
+4. Consumer behavior / Markets / Game theory
 
