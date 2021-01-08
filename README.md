@@ -12,4 +12,5 @@ Spread of fires
   - Bycicle model -> https://www.comses.net/codebases/768182a3-eb7c-4d93-9c27-c42d878bb2ea/releases/1.0.0/
   
 3. Segregation / Inequality Acceptance
+  - https://www.comses.net/codebases/5266/
 
