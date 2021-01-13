@@ -80,17 +80,17 @@ class CityModel(Model):
 
         for start_point in starting_points:
             if start_point[0] == 0:
-                velocity_vector = (1, 0)
+                velocity = (1, 0)
             elif start_point[0] == self.grid.height-1:
-                velocity_vector = (-1, 0)
+                velocity = (-1, 0)
             elif start_point[1] == 0:
-                velocity_vector = (0, 1)
+                velocity = (0, 1)
             else:
-                velocity_vector = (0, -1)
+                velocity = (0, -1)
 
             end_point = random.choice(end_points)
 
-            agent = CarAgent(unique_id=self.get_new_unique_id(), model=self, pos=start_point, velocity=1, velocity_vector=velocity_vector, destination=end_point)
+            agent = CarAgent(unique_id=self.get_new_unique_id(), model=self, pos=start_point, speed=1, velocity=velocity, destination=end_point)
             self.grid.place_agent(agent, pos=start_point)
             self.agents.append(agent)
             
