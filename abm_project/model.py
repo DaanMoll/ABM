@@ -1,3 +1,7 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+import numpy as np
+
 from mesa import Model
 from mesa.space import SingleGrid
 from mesa.time import BaseScheduler
@@ -9,8 +13,11 @@ n_roads_vertical = 4
 
 road_width = 2
 
-distance_roads_hortizontal = 20
-distance_roads_vertical = 20
+building_width = 20
+building_height = 20
+
+total_width = building_width * (n_roads_horizontal + 1) + n_roads_horizontal * road_width
+total_height = building_height * (n_roads_vertical + 1) + n_roads_vertical * road_width
 
 
 class CityModel(Model):
@@ -19,9 +26,7 @@ class CityModel(Model):
         super().__init__()
         self.unique_id = 0
 
-        self.grid = SingleGrid(width=distance_roads_hortizontal * (n_roads_horizontal+1) + n_roads_horizontal * road_width,
-                               height=distance_roads_vertical * (n_roads_vertical+1) + n_roads_vertical * road_width,
-                               torus=False)
+        self.grid = SingleGrid(width=total_width, height=total_height, torus=False)
 
         self.create_buildings()
 
@@ -33,15 +38,16 @@ class CityModel(Model):
         """
         Populates area between roads with buildings.
         """
-        road_pos_x = [distance_roads_hortizontal * i + 1 for i in range(1, n_roads_horizontal + 1)] + \
-                     [distance_roads_hortizontal * i + 2 for i in range(1, n_roads_horizontal + 1)]
-        road_pos_y = [distance_roads_vertical * i + 1 for i in range(1, n_roads_vertical + 1)] + \
-                     [distance_roads_vertical * i + 2 for i in range(1, n_roads_vertical + 1)]
+        road_pos_x = [building_width * i + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)] + \
+                     [building_width * i + 1 + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)]
+        road_pos_y = [building_height * i + road_width * (i - 1) for i in range(1, n_roads_vertical + 1)] + \
+                     [building_height * i + 1 + road_width * (i - 1) for i in range(1, n_roads_vertical + 1)]
         road_pos = set(road_pos_x + road_pos_y)
+        print(road_pos)
 
         for x, y in self.grid.empties.copy():
-            if not (x in road_pos or y in road_pos):  # not a road -> building
-                building = BuildingAgent(unique_id=self.get_new_unique_id(), pos=(x, y))
+            if not (x in road_pos or y in road_pos):  # not a road -> place building
+                building = BuildingAgent(unique_id=self.get_new_unique_id(), model=self, pos=(x, y))
                 self.grid.place_agent(building, pos=(x, y))
 
     def create_agent(self):
