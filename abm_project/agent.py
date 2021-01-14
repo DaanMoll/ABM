@@ -12,7 +12,7 @@ class CarAgent(Agent):
         self.speed = speed
         self.directions = ["s", "l", "r"]
         self.vectors = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        
+
         self.velocity = velocity
         self.destination = destination # not being used yet
 
@@ -46,7 +46,7 @@ class CarAgent(Agent):
                 self.turning = False
 
             self.turning_counter += 1
-                
+
         if self.speed != 0:
             change = tuple([x * self.speed for x in self.velocity])
             next_pos = tuple(map(operator.add, self.pos, change))
@@ -58,7 +58,7 @@ class CarAgent(Agent):
                     self.speed -= 1 # if speed increases > 1
                     change = tuple([x * self.speed for x in self.velocity])
                     next_pos = tuple(map(operator.add, self.pos, change))
-            
+
                 if intersection:
                     self.speed = 0
                     self.turning = True
@@ -68,8 +68,24 @@ class CarAgent(Agent):
                 if self.turning:
                     self.turning_counter -= 1
                 self.model.grid.move_agent(self, next_pos)
-    
+
 class BuildingAgent(Agent):
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
         self.pos = pos
+
+class IntersectionAgent(Agent):
+    def __init__(self, unique_id, model, pos):
+        super().__init__(unique_id, model)
+        self.pos = pos
+        print(pos)
+        traffic_light_positions = [(pos[0]-1,pos[1]),(pos[0]+1,pos[1]-1),(pos[0]+2,pos[1]+1),(pos[0],pos[1]+2)]
+        self.traffic_lights = [TrafficlightAgent(unique_id, model, traffic_light_positions[i]) for i in range(4)]
+
+class TrafficlightAgent(Agent):
+    def __init__(self, unique_id, model, pos):
+        super().__init__(unique_id, model)
+        self.colors = {0:'green',1:'orange',2:'red'}
+        self.state = 2
+        self.pos = pos
+        self.timer = 20
