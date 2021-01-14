@@ -64,8 +64,10 @@ class CityModel(Model):
         print(intersections)
         for intersection_pos in intersections:
             intersection = IntersectionAgent(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
+            self.agents.append(intersection)
             for traffic_light in intersection.traffic_lights:
                 self.grid.place_agent(traffic_light, pos=traffic_light.pos)
+                self.agents.append(traffic_light)
         return road_pos, road_pos_x, road_pos_y
 
     def create_agents(self, road_pos_x, road_pos_y):
