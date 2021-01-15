@@ -67,15 +67,7 @@ class CarAgent(Agent):
             if self.model.grid.is_cell_empty(next_pos):
                 if self.turning:
                     self.turning_counter -= 1
-                
-                # if agent moves outside of grid remove agent
-                if next_pos[0] < 0 or next_pos[0] > self.model.grid.width-2 or next_pos[1] < 0 or next_pos[1] > self.model.grid.width-2:
-                    self.model.remove_agent(self)
-                else:
-                    self.model.grid.move_agent(self, next_pos)
-            else:
-                if self.turning:
-                    self.turning_counter -= 1
+                self.model.grid.move_agent(self, next_pos)
     
 class BuildingAgent(Agent):
     def __init__(self, unique_id, model, pos):
