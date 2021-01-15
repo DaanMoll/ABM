@@ -8,7 +8,7 @@ from mesa.time import BaseScheduler
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 
-from agent import CarAgent, BuildingAgent
+from agent import CarAgent, BuildingAgent, IntersectionAgent
 
 import random
 
@@ -55,22 +55,31 @@ class CityModel(Model):
             if not (x in road_pos or y in road_pos):  # not a road -> place building
                 building = BuildingAgent(unique_id=self.get_new_unique_id(), model=self, pos=(x, y))
                 self.grid.place_agent(building, pos=(x, y))
-        
-        intersections = set((x, y) for x in road_pos_x for y in road_pos_y)
-        self.intersections = intersections
 
+        # intersections = set((x, y) for x in road_pos_x for y in road_pos_y)
+        intersection_pos_x = [building_width * i + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)]
+        intersection_pos_y = [building_height * i + road_width * (i - 1) for i in range(1, n_roads_vertical + 1)]
+        intersections = set((x, y) for x in intersection_pos_x for y in intersection_pos_y)
+        self.intersections = intersections
+        print(intersections)
+        for intersection_pos in intersections:
+            intersection = IntersectionAgent(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
+            self.agents.append(intersection)
+            for traffic_light in intersection.traffic_lights:
+                self.grid.place_agent(traffic_light, pos=traffic_light.pos)
+                self.agents.append(traffic_light)
         return road_pos, road_pos_x, road_pos_y
 
     def create_agents(self, road_pos_x, road_pos_y):
         starting_points_top = [(x, self.grid.height-1) for x in road_pos_x if x%2==0]
         starting_points_bottom = [(x, 0) for x in road_pos_x if x%2!=0]
-        
+
         starting_points_left = [(0, y) for y in road_pos_y if y%2==0]
         starting_points_right = [(self.grid.width-1, y) for y in road_pos_y if y%2!=0]
 
         starting_points = starting_points_top + starting_points_bottom + starting_points_left + starting_points_right
 
-        end_points_top = [(x, self.grid.height-1) for x in road_pos_x if x%2==0]
+        end_points_top = [(x, self.grid.height-1) for x in road_pos_x if x%2!=0]
         end_points_bottom = [(x, 0) for x in road_pos_x if x%2!=0]
 
         end_points_left = [(0, y) for y in road_pos_y if y%2==0]
@@ -93,11 +102,11 @@ class CityModel(Model):
             agent = CarAgent(unique_id=self.get_new_unique_id(), model=self, pos=start_point, speed=1, velocity=velocity, destination=end_point)
             self.grid.place_agent(agent, pos=start_point)
             self.agents.append(agent)
-            
+
     def step(self):
         '''
-        Method that steps every agent. 
-        
+        Method that steps every agent.
+
         Prevents applying step on new agents by creating a local list.
         '''
         for agent in list(self.agents):

@@ -1,5 +1,5 @@
 from model import *
-from agent import BuildingAgent, CarAgent
+from agent import BuildingAgent, CarAgent, TrafficLightAgent
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 
@@ -14,7 +14,9 @@ def agent_portrayal(agent):
 
     if type(agent) is BuildingAgent:
         portrayal["Color"] = "blue"
-
+    elif type(agent) is TrafficLightAgent:
+        portrayal["Color"] = agent.colors[agent.state]
+        portrayal["Layer"] = 1
     return portrayal
 
 
