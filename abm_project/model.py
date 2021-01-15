@@ -58,8 +58,17 @@ class CityModel(Model):
                 building = BuildingAgent(unique_id=self.get_new_unique_id(), model=self, pos=(x, y))
                 self.grid.place_agent(building, pos=(x, y))
         
-        intersections = set((x, y) for x in road_pos_x for y in road_pos_y)
+        # intersections = set((x, y) for x in road_pos_x for y in road_pos_y)
+        # self.intersections = intersections
+
+        intersection_pos_x = [building_width * i + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)]
+        intersection_pos_y = [building_height * i + road_width * (i - 1) for i in range(1, n_roads_vertical + 1)]
+        intersections = set((x, y) for x in intersection_pos_x for y in intersection_pos_y)
         self.intersections = intersections
+        print(intersections)
+        print("hoi", len(intersections))
+        for intersection_pos in intersections:
+            print(intersection_pos)
 
         return road_pos, road_pos_x, road_pos_y
 
@@ -120,8 +129,7 @@ class CityModel(Model):
             agent.step()
 
 if __name__ == '__main__':
-    pass
-    # model = CityModel()
+    model = CityModel()
     # model.step()
 
     # grid = CanvasGrid(agent_portrayal, 100, 108, 540, 540)
