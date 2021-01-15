@@ -67,8 +67,16 @@ class CarAgent(Agent):
             if self.model.grid.is_cell_empty(next_pos):
                 if self.turning:
                     self.turning_counter -= 1
-                self.model.grid.move_agent(self, next_pos)
-
+                
+                # if agent moves outside of grid remove agent
+                if next_pos[0] < 0 or next_pos[0] > self.model.grid.width-2 or next_pos[1] < 0 or next_pos[1] > self.model.grid.width-2:
+                    self.model.remove_agent(self)
+                else:
+                    self.model.grid.move_agent(self, next_pos)
+            else:
+                if self.turning:
+                    self.turning_counter -= 1
+    
 class BuildingAgent(Agent):
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
@@ -77,6 +85,8 @@ class BuildingAgent(Agent):
 
 class Intersection():
     def __init__(self, unique_id, model, pos):
+        self.model = model
+        self.unique_id = unique_id
         self.pos = pos
         traffic_light_positions = [(pos[0] - 1, pos[1]),
                                    (pos[0] + 1, pos[1] - 1),
@@ -87,7 +97,7 @@ class Intersection():
                             (traffic_light_positions[2][0] + 1, traffic_light_positions[2][1]),
                             (traffic_light_positions[3][0], traffic_light_positions[3][1] + 1)]
         self.traffic_lights = [
-            TrafficLightAgent(unique_id, model, traffic_light_positions[i], self, sensor_positions[i])
+            TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[i], self, sensor_positions[i])
             for i in range(4)]
         self.next_green = []
 

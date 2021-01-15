@@ -17,6 +17,15 @@ def agent_portrayal(agent):
     elif type(agent) is TrafficLightAgent:
         portrayal["Color"] = agent.colors[agent.state]
         portrayal["Layer"] = 1
+
+    # elif type(agent) is CarAgent:
+    #     if agent.velocity == (0, 1):
+    #         portrayal["Color"] = "green"
+    #     elif agent.velocity == (1, 0):
+    #         portrayal["Color"] = "black"
+    #     elif agent.velocity == (0, -1):
+    #         portrayal["Color"] = "magenta"
+    
     return portrayal
 
 
