@@ -75,9 +75,8 @@ class BuildingAgent(Agent):
         self.pos = pos
 
 
-class IntersectionAgent(Agent):
+class Intersection():
     def __init__(self, unique_id, model, pos):
-        super().__init__(unique_id, model)
         self.pos = pos
         traffic_light_positions = [(pos[0] - 1, pos[1]),
                                    (pos[0] + 1, pos[1] - 1),
@@ -96,6 +95,7 @@ class IntersectionAgent(Agent):
         if all(traffic_light.state == 2 for traffic_light in self.traffic_lights) and len(self.next_green) > 0:
             next_traffic_light = self.next_green.pop(0)
             next_traffic_light.state = 0
+
 
 
 class TrafficLightAgent(Agent):

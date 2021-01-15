@@ -8,7 +8,8 @@ from mesa.time import BaseScheduler
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 
-from agent import CarAgent, BuildingAgent, IntersectionAgent
+from agent import CarAgent, BuildingAgent, Intersection
+
 
 import random
 
@@ -63,7 +64,7 @@ class CityModel(Model):
         self.intersections = intersections
         print(intersections)
         for intersection_pos in intersections:
-            intersection = IntersectionAgent(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
+            intersection = Intersection(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
             self.agents.append(intersection)
             for traffic_light in intersection.traffic_lights:
                 self.grid.place_agent(traffic_light, pos=traffic_light.pos)
