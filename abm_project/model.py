@@ -66,7 +66,6 @@ class CityModel(Model):
 
         for intersection_pos in intersections:
             intersection = Intersection(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
-            
             self.intersections.append(intersection)
 
             for traffic_light in intersection.traffic_lights:

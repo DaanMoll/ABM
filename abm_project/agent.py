@@ -97,7 +97,7 @@ class Intersection():
                             (traffic_light_positions[2][0] + 1, traffic_light_positions[2][1]),
                             (traffic_light_positions[3][0], traffic_light_positions[3][1] + 1)]
         self.traffic_lights = [
-            TrafficLightAgent(self.model.get_new_unique_id(), model, traffic_light_positions[i], self, sensor_positions[i])
+            TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[i], self, sensor_positions[i])
             for i in range(4)]
         self.next_green = []
 
@@ -105,6 +105,7 @@ class Intersection():
         if all(traffic_light.state == 2 for traffic_light in self.traffic_lights) and len(self.next_green) > 0:
             next_traffic_light = self.next_green.pop(0)
             next_traffic_light.state = 0
+
 
 
 class TrafficLightAgent(Agent):
