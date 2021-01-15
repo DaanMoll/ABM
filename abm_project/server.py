@@ -1,5 +1,5 @@
-from model import *
-from agent import BuildingAgent, CarAgent
+from abm_project.model import *
+from abm_project.agent import BuildingAgent, CarAgent
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 
