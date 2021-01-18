@@ -20,62 +20,81 @@ class CarAgent(Agent):
         self.turning_counter = 0
 
     def step(self):
-        if self.turning:
-            if self.turning_counter == 0:
-                self.turn = random.choice(self.directions)
-                for i in range(len(self.vectors)):
-                    if self.vectors[i] == self.velocity:
-                        if self.turn == "r":
-                            self.new_vector = self.vectors[(i+1)%len(self.vectors)]
-                        elif self.turn == "l":
-                            self.new_vector = self.vectors[i-1]
-                        else:
-                            self.new_vector = self.velocity
-            elif self.turning_counter == 1:
-                self.speed = 1
-            elif self.turning_counter == 2:
-                if self.turn == "r":
-                    self.velocity = self.new_vector
-                    self.turning = False
-            elif self.turning_counter == 3:
-                if self.turn == "l":
-                    self.velocity = self.new_vector
-                else:
-                    self.turning = False
-            elif self.turning_counter == 4:
-                self.turning = False
+        change = tuple([x * self.speed for x in self.velocity])
+        next_pos = tuple(map(operator.add, self.pos, change))
 
-            self.turning_counter += 1
+        if next_pos[0] < 0 or next_pos[0] > self.model.grid.width-2 or next_pos[1] < 0 or next_pos[1] > self.model.grid.width-2:
+            self.model.remove_agent(self)
+        else:
+            # if next_pos in self.model.intersections:
+            #     if # light is green
+            #         self.model.grid.move_agent(self, next_pos)
+            #     self.speed -= 1 # if speed increases > 1
+            #     change = tuple([x * self.speed for x in self.velocity])
+            #     next_pos = tuple(map(operator.add, self.pos, change))
+            # else:
+            print("hoi", self.model.grid.get_cell_list_contents(next_pos))
+            # if car in cell list then cant go there
+            self.model.grid.move_agent(self, next_pos)
 
-        if self.speed != 0:
-            change = tuple([x * self.speed for x in self.velocity])
-            next_pos = tuple(map(operator.add, self.pos, change))
+        
+    # def step(self):
+    #     if self.turning:
+    #         if self.turning_counter == 0:
+    #             self.turn = random.choice(self.directions)
+    #             for i in range(len(self.vectors)):
+    #                 if self.vectors[i] == self.velocity:
+    #                     if self.turn == "r":
+    #                         self.new_vector = self.vectors[(i+1)%len(self.vectors)]
+    #                     elif self.turn == "l":
+    #                         self.new_vector = self.vectors[i-1]
+    #                     else:
+    #                         self.new_vector = self.velocity
+    #         elif self.turning_counter == 1:
+    #             self.speed = 1
+    #         elif self.turning_counter == 2:
+    #             if self.turn == "r":
+    #                 self.velocity = self.new_vector
+    #                 self.turning = False
+    #         elif self.turning_counter == 3:
+    #             if self.turn == "l":
+    #                 self.velocity = self.new_vector
+    #             else:
+    #                 self.turning = False
+    #         elif self.turning_counter == 4:
+    #             self.turning = False
 
-            if not self.turning:
-                intersection = False
-                while next_pos in self.model.intersections:
-                    intersection = True
-                    self.speed -= 1 # if speed increases > 1
-                    change = tuple([x * self.speed for x in self.velocity])
-                    next_pos = tuple(map(operator.add, self.pos, change))
+    #         self.turning_counter += 1
 
-                if intersection:
-                    self.speed = 0
-                    self.turning = True
-                    self.turning_counter = 0
+    #     if self.speed != 0:
+    #         change = tuple([x * self.speed for x in self.velocity])
+    #         next_pos = tuple(map(operator.add, self.pos, change))
 
-            if self.model.grid.is_cell_empty(next_pos):
-                if self.turning:
-                    self.turning_counter -= 1
+    #         if not self.turning:
+    #             intersection = False
+    #             while next_pos in self.model.intersections:
+    #                 intersection = True
+    #                 self.speed -= 1 # if speed increases > 1
+    #                 change = tuple([x * self.speed for x in self.velocity])
+    #                 next_pos = tuple(map(operator.add, self.pos, change))
+
+    #             if intersection:
+    #                 self.speed = 0
+    #                 self.turning = True
+    #                 self.turning_counter = 0
+
+    #         if self.model.grid.is_cell_empty(next_pos):
+    #             if self.turning:
+    #                 self.turning_counter -= 1
                 
-                # if agent moves outside of grid remove agent
-                if next_pos[0] < 0 or next_pos[0] > self.model.grid.width-2 or next_pos[1] < 0 or next_pos[1] > self.model.grid.width-2:
-                    self.model.remove_agent(self)
-                else:
-                    self.model.grid.move_agent(self, next_pos)
-            else:
-                if self.turning:
-                    self.turning_counter -= 1
+    #             # if agent moves outside of grid remove agent
+    #             if next_pos[0] < 0 or next_pos[0] > self.model.grid.width-2 or next_pos[1] < 0 or next_pos[1] > self.model.grid.width-2:
+    #                 self.model.remove_agent(self)
+    #             else:
+    #                 self.model.grid.move_agent(self, next_pos)
+    #         else:
+    #             if self.turning:
+    #                 self.turning_counter -= 1
     
 class BuildingAgent(Agent):
     def __init__(self, unique_id, model, pos):
@@ -96,9 +115,13 @@ class Intersection():
                             (traffic_light_positions[1][0], traffic_light_positions[1][1] - 1),
                             (traffic_light_positions[2][0] + 1, traffic_light_positions[2][1]),
                             (traffic_light_positions[3][0], traffic_light_positions[3][1] + 1)]
-        self.traffic_lights = [
-            TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[i], self, sensor_positions[i])
-            for i in range(4)]
+        
+        self.traffic_lights = []
+        for i in range(4):
+            agent = TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[i], self, sensor_positions[i])
+            self.traffic_lights.append(agent)
+            self.model.grid.place_agent(agent, traffic_light_positions[i])
+
         self.next_green = []
 
     def step(self):
@@ -106,22 +129,20 @@ class Intersection():
             next_traffic_light = self.next_green.pop(0)
             next_traffic_light.state = 0
 
-
-
 class TrafficLightAgent(Agent):
-    def __init__(self, unique_id, model, pos, intersection_agent, sensor_position):
+    def __init__(self, unique_id, model, pos, intersection, sensor_position):
         super().__init__(unique_id, model)
         self.colors = {0: 'green', 1: 'yellow', 2: 'red'}
         self.state = 2
         self.pos = pos
         self.timer = 5
-        self.intersection_agent = intersection_agent
+        self.intersection = intersection
         self.sensor_position = sensor_position
 
     def step(self):
         agents_on_sensor = self.model.grid.get_neighbors(self.sensor_position, radius=0, moore=False, include_center=True)
-        if len(agents_on_sensor) > 0 and type(agents_on_sensor[0]) == CarAgent and self not in self.intersection_agent.next_green:
-            self.intersection_agent.next_green.append(self)
+        if len(agents_on_sensor) > 0 and type(agents_on_sensor[0]) == CarAgent and self not in self.intersection.next_green:
+            self.intersection.next_green.append(self)
 
         if self.state == 0:
             if self.timer <= 0:

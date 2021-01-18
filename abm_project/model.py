@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from mesa import Model
-from mesa.space import SingleGrid
+from mesa.space import SingleGrid, MultiGrid
 from mesa.time import BaseScheduler
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
@@ -31,7 +31,7 @@ class CityModel(Model):
         self.agents = []
         self.n_agents = 0
 
-        self.grid = SingleGrid(width=total_width, height=total_height, torus=False)
+        self.grid = MultiGrid(width=total_width, height=total_height, torus=False)
 
         road_pos = self.create_buildings()
         
@@ -62,7 +62,6 @@ class CityModel(Model):
         intersection_pos_x = [building_width * i + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)]
         intersection_pos_y = [building_height * i + road_width * (i - 1) for i in range(1, n_roads_vertical + 1)]
         intersections = set((x, y) for x in intersection_pos_x for y in intersection_pos_y)
-        print(intersections)
 
         for intersection_pos in intersections:
             intersection = Intersection(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
@@ -92,6 +91,7 @@ class CityModel(Model):
                 self.grid.place_agent(agent, pos=start_point)
                 self.agents.append(agent)
                 self.n_agents += 1
+            break
 
     def remove_agent(self, agent):
         self.n_agents -= 1
@@ -104,18 +104,18 @@ class CityModel(Model):
 
     def start_end_points(self, road_pos_x, road_pos_y):
         """ calculate starting points and ending points."""
-        
+
         starting_points_top = [(x, self.grid.height-1) for x in road_pos_x if x%2==0]
         starting_points_bottom = [(x, 0) for x in road_pos_x if x%2!=0]
         starting_points_left = [(0, y) for y in road_pos_y if y%2==0]
         starting_points_right = [(self.grid.width-1, y) for y in road_pos_y if y%2!=0]
 
         self.starting_points = starting_points_top + starting_points_bottom + starting_points_left + starting_points_right
-        
-        end_points_top = [(x, self.grid.height-1) for x in road_pos_x if x%2==0]
-        end_points_bottom = [(x, 0) for x in road_pos_x if x%2!=0]
-        end_points_left = [(0, y) for y in road_pos_y if y%2==0]
-        end_points_right = [(self.grid.width-1, y) for y in road_pos_y if y%2!=0]
+
+        end_points_top = [(x, self.grid.height-1) for x in road_pos_x if x%2!=0]
+        end_points_bottom = [(x, 0) for x in road_pos_x if x%2==0]
+        end_points_left = [(0, y) for y in road_pos_y if y%2!=0]
+        end_points_right = [(self.grid.width-1, y) for y in road_pos_y if y%2==0]
 
         self.end_points = end_points_top + end_points_bottom + end_points_left + end_points_right
 
@@ -125,8 +125,11 @@ class CityModel(Model):
 
         Prevents applying step on new agents by creating a local list.
         '''
-        if self.n_agents < 100:
-            self.create_agents()
+        # if self.n_agents < 100:
+        #     self.create_agents()
+
+        for intersection in self.intersections:
+            intersection.step()
 
         for agent in list(self.agents):
             agent.step()
