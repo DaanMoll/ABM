@@ -28,20 +28,46 @@ class CarAgent(Agent):
 
     def step(self):
         next_path = self.path[self.pos_i + 1:self.pos_i + self.max_velocity + 1]
-        content: [CarAgent] = self.model.grid.get_cell_list_contents(next_path)
+        content: [TrafficLightAgent, CarAgent] = self.model.grid.get_cell_list_contents(next_path)
+        current = self.model.grid.get_cell_list_contents(self.pos)
+        traffic_light = False
+
+        if isinstance(current[0], TrafficLightAgent):
+            if current[0].state != 0:
+                self.velocity = 0
+                return
+            else:
+                self.accelerate(int(np.ceil(self.max_velocity - self.velocity)/2))
 
         if content:
-            distance_to_next_car = next_path.index(content[0].pos)
-            if self.velocity > 0 and distance_to_next_car < self.velocity:  # decelerate based on the closest car
-                self.decelerate(distance_to_next_car)
-        elif self.velocity < self.max_velocity:
-            self.accelerate(np.ceil((self.max_velocity - self.velocity) / 2))
+            next_obj = content[0]
+            distance_to_next = next_path.index(next_obj.pos)
+            if isinstance(next_obj, TrafficLightAgent) and self.velocity > 0:
+                if len(content) > 1:
+                    next_car = content[1]
+                    if next_car.pos == next_obj.pos:  # next car is on traffic light
+                        distance_to_next -= 1
+                traffic_light = True
 
+            if self.velocity > 0 and distance_to_next <= self.velocity:  # decelerate based on the closest car
+                if traffic_light:
+                    distance_to_next += 1
+                self.decelerate(distance_to_next)
+            elif self.velocity < self.max_velocity and distance_to_next > 0:
+                self.accelerate(np.ceil((self.max_velocity - self.velocity) / 2))
+            else:
+                pass
+        self.move(next_path)
+
+    def move(self, next_path):
         if self.pos_i + self.velocity >= len(self.path):  # remove agent because it reached the edge
             self.destroy()
         elif self.velocity > 0:
             self.model.grid.move_agent(self, next_path[self.velocity-1])
             self.pos_i += self.velocity
+        else:
+            pass
+
 
 class BuildingAgent(Agent):
     def __init__(self, unique_id, model, pos):
@@ -49,7 +75,7 @@ class BuildingAgent(Agent):
         self.pos = pos
 
 
-class Intersection():
+class Intersection:
     def __init__(self, unique_id, model, pos):
         self.model = model
         self.unique_id = unique_id
@@ -58,12 +84,8 @@ class Intersection():
                                    (pos[0] + 1, pos[1] - 1),
                                    (pos[0] + 2, pos[1] + 1),
                                    (pos[0], pos[1] + 2)]
-        sensor_positions = [(traffic_light_positions[0][0] - 1, traffic_light_positions[0][1]),
-                            (traffic_light_positions[1][0], traffic_light_positions[1][1] - 1),
-                            (traffic_light_positions[2][0] + 1, traffic_light_positions[2][1]),
-                            (traffic_light_positions[3][0], traffic_light_positions[3][1] + 1)]
         self.traffic_lights = [
-            TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[i], self, sensor_positions[i])
+            TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[i], self)
             for i in range(4)]
         self.next_green = []
 
@@ -73,21 +95,19 @@ class Intersection():
             next_traffic_light.state = 0
 
 
-
 class TrafficLightAgent(Agent):
-    def __init__(self, unique_id, model, pos, intersection_agent, sensor_position):
+    def __init__(self, unique_id, model, pos, intersection):
         super().__init__(unique_id, model)
         self.colors = {0: 'green', 1: 'yellow', 2: 'red'}
         self.state = 2
         self.pos = pos
         self.timer = 5
-        self.intersection_agent = intersection_agent
-        self.sensor_position = sensor_position
+        self.intersection = intersection
 
     def step(self):
-        agents_on_sensor = self.model.grid.get_neighbors(self.sensor_position, radius=0, moore=False, include_center=True)
-        if len(agents_on_sensor) > 0 and type(agents_on_sensor[0]) == CarAgent and self not in self.intersection_agent.next_green:
-            self.intersection_agent.next_green.append(self)
+        agents_on_sensor = self.model.grid.get_cell_list_contents(self.pos)
+        if len(agents_on_sensor) > 1 and isinstance(agents_on_sensor[1], CarAgent) and self not in self.intersection.next_green:
+            self.intersection.next_green.append(self)
 
         if self.state == 0:
             if self.timer <= 0:

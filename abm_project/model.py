@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from mesa import Model
-from mesa.space import SingleGrid
+from mesa.space import SingleGrid, MultiGrid
 from mesa.time import BaseScheduler
 from scipy.spatial.distance import euclidean
 from agent import CarAgent, BuildingAgent, Intersection
@@ -27,14 +27,20 @@ class CityModel(Model):
         super().__init__()
         self.unique_id = 0
         self.schedule = BaseScheduler(self)
-        self.grid = SingleGrid(width=total_width, height=total_height, torus=False)
+        self.grid = MultiGrid(width=total_width, height=total_height, torus=False)
         road_pos = self.create_buildings()
-        
+        # create buildings, then road map becasue it uses empty cell list
         self.road_graph = self.create_road_graph()
+        # then create intersections otherwise graph doesnt work
+        # Currently still needed for traffic lights
+        self.agents = []
+        self.create_intersections()
+
         self.starting_points = self.get_starting_points(road_pos[1], road_pos[2])
         self.end_points = self.get_end_points(road_pos[1], road_pos[2])
-        self.max_car_agents = 1000
+        self.max_car_agents = 200
         self.num_car_agents = 0
+
         for i in range(5):
             self.create_car_agent()
 
@@ -59,19 +65,22 @@ class CityModel(Model):
                 building = BuildingAgent(unique_id=self.get_new_unique_id(), model=self, pos=(x, y))
                 self.grid.place_agent(building, pos=(x, y))
 
+        return road_pos, road_pos_x, road_pos_y
+
+    def create_intersections(self):
         intersection_pos_x = [building_width * i + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)]
         intersection_pos_y = [building_height * i + road_width * (i - 1) for i in range(1, n_roads_vertical + 1)]
         intersections = set((x, y) for x in intersection_pos_x for y in intersection_pos_y)
-        print(intersections)
 
         for intersection_pos in intersections:
             intersection = Intersection(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
             self.intersections.append(intersection)
+            self.schedule.add(intersection)
 
             for traffic_light in intersection.traffic_lights:
                 self.grid.place_agent(traffic_light, pos=traffic_light.pos)
+                self.schedule.add(traffic_light)
                 self.agents.append(traffic_light)
-        return road_pos, road_pos_x, road_pos_y
 
     def get_starting_points(self, road_pos_x, road_pos_y):
         starting_points_top = [(x, self.grid.height - 1) for x in road_pos_x if x % 2 == 0]
@@ -83,7 +92,6 @@ class CityModel(Model):
         return starting_points_top + starting_points_bottom + starting_points_left + starting_points_right
 
     def get_end_points(self, road_pos_x, road_pos_y):
-
         end_points_top = [(x, self.grid.height - 1) for x in road_pos_x if x % 2 != 0]
         end_points_bottom = [(x, 0) for x in road_pos_x if x % 2 == 0]
 
@@ -93,7 +101,6 @@ class CityModel(Model):
         return end_points_top + end_points_bottom + end_points_left + end_points_right
 
     def create_car_agent(self):
-
         start_point = random.choice(self.starting_points)
         while not self.grid.is_cell_empty(start_point):  # if the starting cell is not empty, pick a new one
             start_point = random.choice(self.starting_points)
