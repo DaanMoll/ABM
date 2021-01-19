@@ -38,10 +38,10 @@ class CityModel(Model):
 
         self.starting_points = self.get_starting_points(road_pos[1], road_pos[2])
         self.end_points = self.get_end_points(road_pos[1], road_pos[2])
-        self.max_car_agents = 1000
+        self.max_car_agents = 2
         self.num_car_agents = 0
 
-        for i in range(5):
+        for _ in range(1):
             self.create_car_agent()
 
 
@@ -102,7 +102,7 @@ class CityModel(Model):
         return end_points_top + end_points_bottom + end_points_left + end_points_right
 
     def create_car_agent(self):
-        start_point = random.choice(self.starting_points)
+        # start_point = random.choice(self.starting_points)
         start_point = self.starting_points[0]
         print(start_point)
         while not self.grid.is_cell_empty(start_point):  # if the starting cell is not empty, pick a new one
@@ -124,7 +124,7 @@ class CityModel(Model):
     def step(self):
         self.schedule.step()
         if self.num_car_agents < self.max_car_agents:
-            for _ in range(5):
+            for _ in range(1):
                 self.create_car_agent()
 
     def create_road_graph(self, draw=False):
