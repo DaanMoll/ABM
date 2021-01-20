@@ -6,7 +6,7 @@ from mesa import Model
 from mesa.space import SingleGrid, MultiGrid
 from mesa.time import BaseScheduler
 from scipy.spatial.distance import euclidean
-from agent import CarAgent, BuildingAgent, Intersection
+from agent import CarAgent, BuildingAgent, IntersectionAgent
 
 import random
 
@@ -73,7 +73,7 @@ class CityModel(Model):
         intersections = set((x, y) for x in intersection_pos_x for y in intersection_pos_y)
 
         for intersection_pos in intersections:
-            intersection = Intersection(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
+            intersection = IntersectionAgent(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
             self.intersections.append(intersection)
             self.schedule.add(intersection)
 
