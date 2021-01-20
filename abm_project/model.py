@@ -34,6 +34,7 @@ class CityModel(Model):
         # then create intersections otherwise graph doesnt work
         # Currently still needed for traffic lights
         self.agents = []
+        self.intersections = []
         self.create_intersections()
 
         self.starting_points = self.get_starting_points(road_pos[1], road_pos[2])
@@ -44,6 +45,7 @@ class CityModel(Model):
         for i in range(5):
             self.create_car_agent()
 
+
     def get_new_unique_id(self):
         self.unique_id += 1
         return self.unique_id
@@ -52,7 +54,6 @@ class CityModel(Model):
         """
         Populates area between roads with buildings.
         """
-        self.intersections = []
 
         road_pos_x = [building_width * i + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)] + \
                      [building_width * i + 1 + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)]
@@ -64,7 +65,7 @@ class CityModel(Model):
             if not (x in road_pos or y in road_pos):  # not a road -> place building
                 building = BuildingAgent(unique_id=self.get_new_unique_id(), model=self, pos=(x, y))
                 self.grid.place_agent(building, pos=(x, y))
-
+        
         return road_pos, road_pos_x, road_pos_y
 
     def create_intersections(self):
@@ -102,7 +103,6 @@ class CityModel(Model):
 
     def create_car_agent(self):
         start_point = random.choice(self.starting_points)
-        # start_point = self.starting_points[0]
         while not self.grid.is_cell_empty(start_point):  # if the starting cell is not empty, pick a new one
             start_point = random.choice(self.starting_points)
 
