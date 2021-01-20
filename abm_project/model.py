@@ -6,7 +6,7 @@ from mesa import Model
 from mesa.space import SingleGrid, MultiGrid
 from mesa.time import BaseScheduler
 from scipy.spatial.distance import euclidean
-from agent import CarAgent, BuildingAgent, Intersection
+from agent import CarAgent, BuildingAgent, IntersectionAgent
 
 import random
 
@@ -34,11 +34,12 @@ class CityModel(Model):
         # then create intersections otherwise graph doesnt work
         # Currently still needed for traffic lights
         self.agents = []
+        self.intersections = []
         self.create_intersections()
 
         self.starting_points = self.get_starting_points(road_pos[1], road_pos[2])
         self.end_points = self.get_end_points(road_pos[1], road_pos[2])
-        self.max_car_agents = 1000
+        self.max_car_agents = 100
         self.num_car_agents = 0
 
         for i in range(5):
@@ -53,7 +54,6 @@ class CityModel(Model):
         """
         Populates area between roads with buildings.
         """
-        self.intersections = []
 
         road_pos_x = [building_width * i + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)] + \
                      [building_width * i + 1 + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)]
@@ -74,7 +74,7 @@ class CityModel(Model):
         intersections = set((x, y) for x in intersection_pos_x for y in intersection_pos_y)
 
         for intersection_pos in intersections:
-            intersection = Intersection(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
+            intersection = IntersectionAgent(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
             self.intersections.append(intersection)
             self.schedule.add(intersection)
 
@@ -103,8 +103,6 @@ class CityModel(Model):
 
     def create_car_agent(self):
         start_point = random.choice(self.starting_points)
-        start_point = self.starting_points[0]
-        print(start_point)
         while not self.grid.is_cell_empty(start_point):  # if the starting cell is not empty, pick a new one
             start_point = random.choice(self.starting_points)
 

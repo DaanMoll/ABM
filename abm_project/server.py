@@ -8,25 +8,16 @@ def agent_portrayal(agent):
     portrayal = {"Shape": "rect",
                  "Filled": "true",
                  "Layer": 0,
-                 "Color": "magenta",
+                 "Color": "black",
                  "w": 0.5,
                  "h": 0.5}
-
-    if type(agent) is BuildingAgent:
+    if isinstance(agent, BuildingAgent):
         portrayal["Color"] = "blue"
-    elif type(agent) is TrafficLightAgent:
+    if isinstance(agent, TrafficLightAgent):
         portrayal["Color"] = agent.colors[agent.state]
-        portrayal["Shape"] = "circle"
-        portrayal["r"] = 1
-
-    # elif type(agent) is CarAgent:
-    #     if agent.velocity == (0, 1):
-    #         portrayal["Color"] = "green"
-    #     elif agent.velocity == (1, 0):
-    #         portrayal["Color"] = "black"
-    #     elif agent.velocity == (0, -1):
-    #         portrayal["Color"] = "magenta"
-    
+        portrayal["Layer"] = 1
+        portrayal["w"] = 0.25
+        portrayal["h"] = 0.25
     return portrayal
 
 
@@ -34,5 +25,3 @@ grid = CanvasGrid(agent_portrayal, total_width, total_height, 4 * total_width+1,
 server = ModularServer(CityModel,
                        [grid],
                        "City Model")
-
-server.launch()
