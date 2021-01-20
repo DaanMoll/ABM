@@ -27,6 +27,7 @@ class CarAgent(Agent):
         self.model.num_car_agents -= 1
 
     def step(self):
+        # print("hoi nu begint auto:", self.unique_id, self.pos)
         next_path = self.path[self.pos_i + 1:self.pos_i + self.max_velocity + 1]
         content: [TrafficLightAgent, CarAgent] = self.model.grid.get_cell_list_contents(next_path)
         current = self.model.grid.get_cell_list_contents(self.pos)
@@ -42,7 +43,8 @@ class CarAgent(Agent):
         if content:
             next_obj = content[0]
             distance_to_next = next_path.index(next_obj.pos)
-            if isinstance(next_obj, TrafficLightAgent) and self.velocity > 0:
+            # if isinstance(next_obj, TrafficLightAgent) and self.velocity > 0: # if velocity > 0 cars stand still before the traffic light
+            if isinstance(next_obj, TrafficLightAgent):
                 if len(content) > 1:
                     next_car = content[1]
                     if next_car.pos == next_obj.pos:  # next car is on traffic light
@@ -53,8 +55,13 @@ class CarAgent(Agent):
                 if traffic_light:
                     distance_to_next += 1
                 self.decelerate(distance_to_next)
-            elif self.velocity < self.max_velocity and distance_to_next > 0:
+            # elif self.velocity < self.max_velocity and distance_to_next > 0: # distance to next gone otherwise cars stand still before traffic light
+            elif self.velocity < self.max_velocity:
+                if traffic_light:
+                    distance_to_next += 1
                 self.accelerate(np.ceil((self.max_velocity - self.velocity) / 2))
+                if self.velocity > distance_to_next:
+                    self.velocity = distance_to_next
             else:
                 pass
         self.move(next_path)
@@ -106,7 +113,7 @@ class TrafficLightAgent(Agent):
 
     def step(self):
         agents_on_sensor = self.model.grid.get_cell_list_contents(self.pos)
-        if len(agents_on_sensor) > 1 and isinstance(agents_on_sensor[1], CarAgent) and self not in self.intersection.next_green:
+        if len(agents_on_sensor) > 1 and self.state != 0 and isinstance(agents_on_sensor[1], CarAgent) and self not in self.intersection.next_green:
             self.intersection.next_green.append(self)
 
         if self.state == 0:

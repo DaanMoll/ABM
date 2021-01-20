@@ -38,7 +38,7 @@ class CityModel(Model):
 
         self.starting_points = self.get_starting_points(road_pos[1], road_pos[2])
         self.end_points = self.get_end_points(road_pos[1], road_pos[2])
-        self.max_car_agents = 200
+        self.max_car_agents = 100
         self.num_car_agents = 0
 
         for i in range(5):
@@ -102,6 +102,7 @@ class CityModel(Model):
 
     def create_car_agent(self):
         start_point = random.choice(self.starting_points)
+        # start_point = self.starting_points[0]
         while not self.grid.is_cell_empty(start_point):  # if the starting cell is not empty, pick a new one
             start_point = random.choice(self.starting_points)
 
