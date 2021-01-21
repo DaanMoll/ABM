@@ -28,7 +28,7 @@ class CarAgent(Agent):
             self.velocity = 0
 
     def destroy(self):
-        print("My final steps: ",self.steps)
+        # print("My final steps: ",self.steps)
         self.model.grid.remove_agent(self)
         self.model.schedule.remove(self)
         self.model.num_car_agents -= 1
@@ -68,6 +68,8 @@ class CarAgent(Agent):
                 self.accelerate(np.ceil((self.max_velocity - self.velocity) / 2))
                 if self.velocity > distance_to_next:
                     self.velocity = distance_to_next
+                elif self.velocity > self.max_velocity:
+                    self.velocity = self.max_velocity
             else:
                 pass
         self.move(next_path)
@@ -76,6 +78,7 @@ class CarAgent(Agent):
         if self.pos_i + self.velocity >= len(self.path):  # remove agent because it reached the edge
             self.destroy()
         elif self.velocity > 0:
+            # print("velocity:", self.velocity, "max velo:", self.max_velocity)
             self.model.grid.move_agent(self, next_path[self.velocity-1])
             self.pos_i += self.velocity
         else:
@@ -94,18 +97,19 @@ class CarAgent(Agent):
                 # print("I'm pissed!")
                 self.haste = 1
                 self.max_velocity = 5
-
+                if self.velocity > self.max_velocity:
+                    self.velocity = self.max_velocity
             elif self.congestion < 0.35 and np.random.uniform() < 0.75:  # substitute with threshold_2
                 # print(self.congestion)
                 self.haste = 3
-                self.max_velocity = 6
+                self.max_velocity = 7
             else:
                 if self.haste != 0:
                     self.haste = 0
                     self.max_velocity = 5
+                    if self.velocity > self.max_velocity:
+                        self.velocity = self.max_velocity
                     # print("I am now calm")
-
-
 
 class BuildingAgent(Agent):
     def __init__(self, unique_id, model, pos):
@@ -132,7 +136,7 @@ class IntersectionAgent(Agent):
             self.traffic_lights.append(tlight2)
 
         self.green_duration = 5
-        self.yellow_duration = 0
+        self.yellow_duration = 2
 
     def step(self):
         if self.yellow_duration > 0:
