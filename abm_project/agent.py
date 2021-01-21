@@ -11,6 +11,12 @@ class CarAgent(Agent):
         self.pos = path[self.pos_i]
         self.max_velocity = max_velocity
         self.velocity = max_velocity
+        self.all_velocity = []
+        self.all_max_velocity = []
+        self.congestion = self.velocity/self.max_velocity
+
+        self.haste = 0
+        self.steps = 0
 
     def accelerate(self, amount):
         self.velocity += int(amount)
@@ -22,11 +28,14 @@ class CarAgent(Agent):
             self.velocity = 0
 
     def destroy(self):
+        print("My final steps: ",self.steps)
         self.model.grid.remove_agent(self)
         self.model.schedule.remove(self)
         self.model.num_car_agents -= 1
 
     def step(self):
+        self.update_congestion()
+        self.update_haste()
         next_path = self.path[self.pos_i + 1:self.pos_i + self.max_velocity + 1]
         content: [TrafficLightAgent, CarAgent] = self.model.grid.get_cell_list_contents(next_path)
         current = self.model.grid.get_cell_list_contents(self.pos)
@@ -71,6 +80,31 @@ class CarAgent(Agent):
             self.pos_i += self.velocity
         else:
             pass
+
+    def update_congestion(self):
+        self.all_velocity.append(self.velocity)
+        self.all_max_velocity.append(self.max_velocity)
+        self.congestion = sum(self.all_velocity)/sum(self.all_max_velocity)
+
+        self.steps += 1
+
+    def update_haste(self):
+        if self.steps > 10:
+            if self.congestion < 0.5 and np.random.uniform() < 0.75:  # substitute with threshold_1
+                # print("I'm pissed!")
+                self.haste = 1
+                self.max_velocity = 5
+
+            elif self.congestion < 0.35 and np.random.uniform() < 0.75:  # substitute with threshold_2
+                # print(self.congestion)
+                self.haste = 3
+                self.max_velocity = 6
+            else:
+                if self.haste != 0:
+                    self.haste = 0
+                    self.max_velocity = 5
+                    # print("I am now calm")
+
 
 
 class BuildingAgent(Agent):

@@ -5,9 +5,11 @@ import numpy as np
 from mesa import Model
 from mesa.space import SingleGrid, MultiGrid
 from mesa.time import BaseScheduler
+from mesa.datacollection import DataCollector
+from numpy.lib.function_base import average
 from scipy.spatial.distance import euclidean
 from agent import CarAgent, BuildingAgent, IntersectionAgent
-
+from mesa.datacollection import DataCollector
 import random
 
 n_roads_horizontal = 4
@@ -45,10 +47,25 @@ class CityModel(Model):
         for i in range(5):
             self.create_car_agent()
 
+        self.datacollector = DataCollector(model_reporters={
+            "AverageCongestion": self.get_average_congestion,
+            "AverageSteps": self.get_average_final_steps
+        })
+
 
     def get_new_unique_id(self):
         self.unique_id += 1
         return self.unique_id
+
+    def get_average_congestion(model):
+        all_congestion = [agent.congestion for agent in model.schedule.agents if isinstance(
+            agent, CarAgent)]
+        return 100 - 100*(sum(all_congestion)/len(all_congestion))
+
+    def get_average_final_steps(model):
+        all_steps = [agent.steps for agent in model.schedule.agents if isinstance(
+            agent, CarAgent)]
+        return np.mean(all_steps)
 
     def create_buildings(self):
         """
@@ -65,7 +82,7 @@ class CityModel(Model):
             if not (x in road_pos or y in road_pos):  # not a road -> place building
                 building = BuildingAgent(unique_id=self.get_new_unique_id(), model=self, pos=(x, y))
                 self.grid.place_agent(building, pos=(x, y))
-        
+
         return road_pos, road_pos_x, road_pos_y
 
     def create_intersections(self):
@@ -124,6 +141,7 @@ class CityModel(Model):
         if self.num_car_agents < self.max_car_agents:
             for _ in range(5):
                 self.create_car_agent()
+        self.datacollector.collect(self)
 
     def create_road_graph(self, draw=False):
         graph = nx.DiGraph()
