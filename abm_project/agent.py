@@ -28,102 +28,113 @@ class CarAgent(Agent):
 
     def step(self):
         next_path = self.path[self.pos_i + 1:self.pos_i + self.max_velocity + 1]
-        content: [CarAgent] = self.model.grid.get_cell_list_contents(next_path)
-        
+        content: [TrafficLightAgent, CarAgent] = self.model.grid.get_cell_list_contents(next_path)
         current = self.model.grid.get_cell_list_contents(self.pos)
-        # check if waiting for traffic_light
-        if len(current) > 1:
-            for agent in current:
-                if type(agent) == TrafficLightAgent:
-                    if agent.state != 0:
-                        self.waiting = True
-                    else:
-                        self.waiting = False   
+        traffic_light = False
+
+        if isinstance(current[0], TrafficLightAgent):
+            if current[0].state != 0:
+                self.velocity = 0
+                return
+            else:
+                self.accelerate(int(np.ceil(self.max_velocity - self.velocity)/2))
 
         if content:
-            if type(content[0]) == CarAgent:
-                distance_to_next_car = next_path.index(content[0].pos)
-                if self.velocity > 0 and distance_to_next_car < self.velocity:  # decelerate based on the closest car
-                    self.decelerate(distance_to_next_car)
-            elif type(content[0]) == TrafficLightAgent:
-                # so seeing traffic light so check if other cars on that cell
-                content_light = self.model.grid.get_cell_list_contents(content[0].pos)
-                if len(content_light) > 1: # car on cell
-                    pos_i = self.path.index(content[0].pos) - 1
-                    self.model.grid.move_agent(self, self.path[pos_i])
-                    self.waiting = True
-                # so light is yellow or red
-                elif content[0].state != 0:
-                    # distance_to_light = next_path.index(content[0].pos)
-                    self.model.grid.move_agent(self, content[0].pos)
-                    self.velocity = 0
-                    self.pos_i = self.path.index(content[0].pos)
-                    self.waiting = True
+            next_obj = content[0]
+            distance_to_next = next_path.index(next_obj.pos)
+            if isinstance(next_obj, TrafficLightAgent):
+                if len(content) > 1:
+                    next_car = content[1]
+                    if next_car.pos == next_obj.pos:  # next car is on traffic light
+                        distance_to_next -= 1
+                traffic_light = True
 
-        if self.velocity < self.max_velocity and not self.waiting:
-            self.accelerate(np.ceil((self.max_velocity - self.velocity) / 2))
+            if self.velocity > 0 and distance_to_next <= self.velocity:  # decelerate based on the closest car
+                if traffic_light:
+                    distance_to_next += 1
+                self.decelerate(distance_to_next)
+            elif self.velocity < self.max_velocity:
+                if traffic_light:
+                    distance_to_next += 1
+                self.accelerate(np.ceil((self.max_velocity - self.velocity) / 2))
+                if self.velocity > distance_to_next:
+                    self.velocity = distance_to_next
+                elif self.velocity > self.max_velocity:
+                    self.velocity = self.max_velocity
+            else:
+                pass
+        self.move(next_path)
 
+    def move(self, next_path):
         if self.pos_i + self.velocity >= len(self.path):  # remove agent because it reached the edge
             self.destroy()
         elif self.velocity > 0:
             self.model.grid.move_agent(self, next_path[self.velocity-1])
             self.pos_i += self.velocity
+        else:
+            pass
+
 
 class BuildingAgent(Agent):
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
         self.pos = pos
 
-class Intersection():
+
+class IntersectionAgent(Agent):
     def __init__(self, unique_id, model, pos):
+        super().__init__(unique_id, model)
         self.model = model
         self.unique_id = unique_id
         self.pos = pos
+        self.counter = 0
         traffic_light_positions = [(pos[0] - 1, pos[1]),
                                    (pos[0] + 1, pos[1] - 1),
                                    (pos[0] + 2, pos[1] + 1),
                                    (pos[0], pos[1] + 2)]
-        
         self.traffic_lights = []
-        for i in range(4):
-            agent = TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[i], self)
-            self.traffic_lights.append(agent)
-        #     self.model.grid.place_agent(agent, traffic_light_positions[i])
+        for i in range(2):
+            tlight1 = TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[2*i], state=2)
+            tlight2 = TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[2*i+1], state=0)
+            self.traffic_lights.append(tlight1)
+            self.traffic_lights.append(tlight2)
 
-        self.next_green = []
+        self.green_duration = 5
+        self.yellow_duration = 2
 
     def step(self):
-        if len(self.next_green) > 0:
-            print(len(self.next_green), self.next_green, self.next_green[0].pos)
-        if all(traffic_light.state == 2 for traffic_light in self.traffic_lights) and len(self.next_green) > 0:
-            next_traffic_light = self.next_green.pop(0)
-            next_traffic_light.state = 0
+        if self.yellow_duration > 0:
+            if self.counter == self.green_duration:
+                for tl in self.traffic_lights:
+                    if tl.state == 0:
+                        tl.switch()
+            elif self.counter == self.green_duration + self.yellow_duration:
+                for tl in self.traffic_lights:
+                    tl.switch()
+                self.counter = 0
+        else:
+            if self.counter == self.green_duration:
+                for tl in self.traffic_lights:
+                    tl.switch(include_yellow=False)
+                self.counter = 0
+        self.counter += 1
+
 
 class TrafficLightAgent(Agent):
-    def __init__(self, unique_id, model, pos, intersection):
+    def __init__(self, unique_id, model, pos, state):
         super().__init__(unique_id, model)
         self.colors = {0: 'green', 1: 'yellow', 2: 'red'}
-        self.state = 2
+        self.state = state
         self.pos = pos
-        self.timer = 5
-        self.intersection = intersection
 
-    def step(self):
-        self.state = 2
-        agents_on_sensor = self.model.grid.get_cell_list_contents(self.pos)
-
-        if len(agents_on_sensor) > 1 and type(agents_on_sensor[1]) == CarAgent and self.state != 0 and self not in self.intersection.next_green:
-            self.intersection.next_green.append(self)
-
-        if self.state == 0:
-            if self.timer <= 0:
-                self.state = 1
-                self.timer = 2
+    def switch(self, include_yellow=True):
+        if include_yellow:
+            if self.state == 2:
+                self.state = 0
             else:
-                self.timer -= 1
-        elif self.state == 1:
-            if self.timer <= 0:
+                self.state += 1
+        else:
+            if self.state == 2:
+                self.state = 0
+            else:
                 self.state = 2
-                self.timer = 5
-            else:
-                self.timer -= 1
