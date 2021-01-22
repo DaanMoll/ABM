@@ -1,6 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
 
 from mesa import Model
 from mesa.space import SingleGrid, MultiGrid
@@ -49,7 +50,7 @@ class CityModel(Model):
 
         self.datacollector = DataCollector(model_reporters={
             "AverageCongestion": self.get_average_congestion,
-            "AverageSteps": self.get_average_final_steps
+            "HastePercent": self.get_average_haste
         })
 
 
@@ -62,10 +63,10 @@ class CityModel(Model):
             agent, CarAgent)]
         return 100 - 100*(sum(all_congestion)/len(all_congestion))
 
-    def get_average_final_steps(model):
-        all_steps = [agent.steps for agent in model.schedule.agents if isinstance(
+    def get_average_haste(model):
+        all_haste = [agent.haste for agent in model.schedule.agents if isinstance(
             agent, CarAgent)]
-        return np.mean(all_steps)
+        return 100 * np.mean(all_haste)
 
     def create_buildings(self):
         """
@@ -180,5 +181,7 @@ class CityModel(Model):
 
 
 if __name__ == '__main__':
-    model = CityModel()
-    model.step()
+    for i in tqdm(range(100)):
+        model = CityModel()
+        for _ in range(500):
+            model.step()

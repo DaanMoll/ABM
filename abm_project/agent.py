@@ -11,12 +11,14 @@ class CarAgent(Agent):
         self.pos = path[self.pos_i]
         self.max_velocity = max_velocity
         self.velocity = max_velocity
-        self.all_velocity = []
-        self.all_max_velocity = []
+        self.velocity_sum = 0
+        self.max_velocity_sum = 0
         self.congestion = self.velocity/self.max_velocity
 
         self.haste = 0
         self.steps = 0
+        self.tolerance = 0.45
+        self.type = 0 # self.update_type()
 
     def accelerate(self, amount):
         self.velocity += int(amount)
@@ -28,7 +30,6 @@ class CarAgent(Agent):
             self.velocity = 0
 
     def destroy(self):
-        # print("My final steps: ",self.steps)
         self.model.grid.remove_agent(self)
         self.model.schedule.remove(self)
         self.model.num_car_agents -= 1
@@ -78,38 +79,55 @@ class CarAgent(Agent):
         if self.pos_i + self.velocity >= len(self.path):  # remove agent because it reached the edge
             self.destroy()
         elif self.velocity > 0:
-            # print("velocity:", self.velocity, "max velo:", self.max_velocity)
             self.model.grid.move_agent(self, next_path[self.velocity-1])
             self.pos_i += self.velocity
         else:
             pass
 
     def update_congestion(self):
-        self.all_velocity.append(self.velocity)
-        self.all_max_velocity.append(self.max_velocity)
-        self.congestion = sum(self.all_velocity)/sum(self.all_max_velocity)
+        self.velocity_sum += self.velocity
+        self.max_velocity_sum += self.max_velocity
+        self.congestion = self.velocity_sum/self.max_velocity_sum
 
         self.steps += 1
 
     def update_haste(self):
+        haste_probability = (self.velocity_sum/self.steps)/self.max_velocity
+
         if self.steps > 10:
-            if self.congestion < 0.5 and np.random.uniform() < 0.75:  # substitute with threshold_1
-                # print("I'm pissed!")
+            if self.congestion < self.tolerance and np.random.uniform() < haste_probability:  # substitute with threshold_1
                 self.haste = 1
-                self.max_velocity = 5
+                self.max_velocity = self.max_velocity + int(np.ceil(self.max_velocity * 0.25))
                 if self.velocity > self.max_velocity:
                     self.velocity = self.max_velocity
-            elif self.congestion < 0.35 and np.random.uniform() < 0.75:  # substitute with threshold_2
-                # print(self.congestion)
-                self.haste = 3
-                self.max_velocity = 7
+
             else:
                 if self.haste != 0:
                     self.haste = 0
                     self.max_velocity = 5
                     if self.velocity > self.max_velocity:
                         self.velocity = self.max_velocity
-                    # print("I am now calm")
+
+    def update_type(self):
+        if np.random.uniform() < 0.10:
+            if np.random.uniform() < 0.3:
+                # Patient
+                self.max_velocity = self.max_velocity - 1
+                self.tolerance_1 = self.tolerance_1 + 0.1
+                self.tolerance_2 = self.tolerance_2 + 0.15
+                if self.velocity > self.max_velocity:
+                        self.velocity = self.max_velocity
+                return 1
+            else:
+                # Inpatient
+                self.max_velocity = self.max_velocity + 2
+                self.tolerance_1 = self.tolerance_1 - 0.1
+                self.tolerance_2 = self.tolerance_2 - 0.15
+                if self.velocity > self.max_velocity:
+                        self.velocity = self.max_velocity
+                return 2
+        else:
+            return 0
 
 class BuildingAgent(Agent):
     def __init__(self, unique_id, model, pos):
