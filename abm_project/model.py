@@ -42,6 +42,7 @@ class CityModel(Model):
         # Currently still needed for traffic lights
         self.agents = []
         self.intersections = []
+        self.green_light_duration = green_light_duration
         self.create_intersections()
 
         self.starting_points = self.get_starting_points(
@@ -53,7 +54,6 @@ class CityModel(Model):
         self.max_car_agents = max_car_agents
         self.max_velocity = max_velocity
         self.tolerance = tolerance
-        self.green_light_duration = green_light_duration
 
         for i in range(5):
             self.create_car_agent()
@@ -108,7 +108,7 @@ class CityModel(Model):
 
         for intersection_pos in intersections:
             intersection = IntersectionAgent(
-                unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos, green_light_duration=5)
+                unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos, green_light_duration=self.green_light_duration)
             self.intersections.append(intersection)
             self.schedule.add(intersection)
 
@@ -249,7 +249,7 @@ def run_experiment(number_iterations, max_steps, experiment_name, max_velocity, 
 
 #demo plot
 
-run_experiment(100,200,"test_data",5,5,100,0.45)
+run_experiment(100,00,"test_data",5,5,100,0.45)
 all_data = pickle.load(open("test_data.p", "rb"))
 for data in all_data:
     if isinstance(data, list):
