@@ -29,7 +29,7 @@ total_height = building_height * \
 
 
 class CityModel(Model):
-    def __init__(self, max_car_agents, max_velocity, tolerance, green_light_duration):
+    def __init__(self, max_car_agents=100, max_velocity=5, tolerance=1, green_light_duration=5):
         super().__init__()
         self.unique_id = 0
         self.schedule = BaseScheduler(self)
