@@ -5,23 +5,22 @@ from mesa.visualization.ModularVisualization import ModularServer
 
 
 def agent_portrayal(agent):
-    # portrayal = {"Shape": "rect",
-    #              "Filled": "true",
-    #              "Layer": 0,
-    #              "Color": "black",
-    #              "w": 0.5,
-    #              "h": 0.5,
-    #              "r": 3}
-    # if isinstance(agent, BuildingAgent):
-    #     portrayal["Color"] = "darkgrey"
-    # if isinstance(agent, TrafficLightAgent):
-    #     portrayal["Color"] = agent.colors[agent.state]
-    #     portrayal["Layer"] = 1
-    #     portrayal["w"] = 0.25
-    #     portrayal["h"] = 0.25
-    # if isinstance(agent, CarAgent) and agent.haste == 1:
-    #     portrayal["Color"] = "darkorange"
-    return {}
+    portrayal = {"Shape": "rect",
+                 "Filled": "true",
+                 "Layer": 0,
+                 "Color": "black",
+                 "w": 0.5,
+                 "h": 0.5,
+                 "r": 3}
+    if isinstance(agent, BuildingAgent):
+        portrayal["Color"] = "darkgrey"
+    if isinstance(agent, TrafficLightAgent):
+        portrayal["Color"] = agent.colors[agent.state]
+        portrayal["Layer"] = 1
+        portrayal["w"] = 0.25
+        portrayal["h"] = 0.25
+    if isinstance(agent, CarAgent) and agent.haste == 1:
+        portrayal["Color"] = "darkorange"
     return portrayal
 
 
