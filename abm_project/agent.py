@@ -11,6 +11,7 @@ class CarAgent(Agent):
         self.pos = path[self.pos_i]
         self.max_velocity = max_velocity
         self.velocity = max_velocity
+        self.hoi = "hoi"
 
     def accelerate(self, amount):
         self.velocity += int(amount)
@@ -99,7 +100,11 @@ class IntersectionAgent(Agent):
             self.traffic_lights.append(tlight1)
             self.traffic_lights.append(tlight2)
 
+<<<<<<< HEAD
+        self.green_duration = 5
+=======
         self.green_duration = green_duration
+>>>>>>> bb0f43cc35997ae0229a6fe407735d5fda427cae
         self.yellow_duration = 2
 
     def step(self):
