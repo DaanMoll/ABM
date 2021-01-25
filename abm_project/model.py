@@ -29,7 +29,7 @@ total_height = building_height * \
 
 
 class CityModel(Model):
-    def __init__(self, max_car_agents=100, cars_per_second=5, tolerance=1, green_light_duration=5):
+    def __init__(self, max_car_agents=100, cars_per_second=5, max_velocity=5, tolerance=1, green_light_duration=5):
         super().__init__()
 
         self.max_car_agents = max_car_agents
@@ -41,7 +41,7 @@ class CityModel(Model):
         self.intersections = []
         self.unique_id = 0
         self.num_car_agents = 0
-        self.max_velocity = 5
+        self.max_velocity = max_velocity
 
         self.datacollector = DataCollector(model_reporters={
             "AverageCongestion": self.get_average_congestion,
@@ -221,7 +221,8 @@ def run_experiment(number_iterations, max_steps, experiment_name, green_light_du
 
     all_data = []
     for i in tqdm(range(number_iterations)):
-        model = CityModel(green_light_duration=green_light_duration, max_car_agents=max_cars_agents, tolerance=tolerance)
+        model = CityModel(green_light_duration=green_light_duration, max_car_agents=max_cars_agents,
+                          tolerance=tolerance)
         for _ in range(max_steps):
             model.step()
 
@@ -258,7 +259,7 @@ def stats(data):
     return all_grid_lock
 
 
-if __name__ == '__main__':
+def main():
     experiment_name = "test_data"
     run_experiment(number_iterations=100,
                    max_steps=100,
@@ -276,3 +277,7 @@ if __name__ == '__main__':
     for _data in locks:
         plt.plot(_data)
     plt.show()
+
+
+if __name__ == '__main__':
+    main()
