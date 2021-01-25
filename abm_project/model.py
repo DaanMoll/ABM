@@ -31,7 +31,6 @@ total_height = building_height * \
 class CityModel(Model):
     def __init__(self, max_car_agents=100, cars_per_second=5, tolerance=1, green_light_duration=5):
         super().__init__()
-
         self.max_car_agents = max_car_agents
         self.cars_per_second = cars_per_second
         self.green_light_duration = green_light_duration

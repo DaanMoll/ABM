@@ -4,14 +4,21 @@ import numpy as np
 
 
 class CarAgent(Agent):
-    def __init__(self, model, unique_id, path, max_velocity):
+    def __init__(self, model, unique_id, path, max_velocity, tolerance):
         super().__init__(unique_id, model)
         self.path = path
         self.pos_i = 0
         self.pos = path[self.pos_i]
         self.max_velocity = max_velocity
         self.velocity = max_velocity
-        self.hoi = "hoi"
+        self.velocity_sum = 0
+        self.max_velocity_sum = 0
+        self.congestion = self.velocity/self.max_velocity
+
+        self.haste = 0
+        self.steps = 0
+        self.tolerance = tolerance
+        self.type = 0  # self.update_type()
 
     def accelerate(self, amount):
         self.velocity += int(amount)
@@ -28,8 +35,12 @@ class CarAgent(Agent):
         self.model.num_car_agents -= 1
 
     def step(self):
-        next_path = self.path[self.pos_i + 1:self.pos_i + self.max_velocity + 1]
-        content: [TrafficLightAgent, CarAgent] = self.model.grid.get_cell_list_contents(next_path)
+        self.update_congestion()
+        self.update_haste()
+        next_path = self.path[self.pos_i +
+                              1:self.pos_i + self.max_velocity + 1]
+        content: [TrafficLightAgent,
+                  CarAgent] = self.model.grid.get_cell_list_contents(next_path)
         current = self.model.grid.get_cell_list_contents(self.pos)
         traffic_light = False
 
@@ -38,7 +49,8 @@ class CarAgent(Agent):
                 self.velocity = 0
                 return
             else:
-                self.accelerate(int(np.ceil(self.max_velocity - self.velocity)/2))
+                self.accelerate(
+                    int(np.ceil(self.max_velocity - self.velocity)/2))
 
         if content:
             next_obj = content[0]
@@ -57,7 +69,8 @@ class CarAgent(Agent):
             elif self.velocity < self.max_velocity:
                 if traffic_light:
                     distance_to_next += 1
-                self.accelerate(np.ceil((self.max_velocity - self.velocity) / 2))
+                self.accelerate(
+                    np.ceil((self.max_velocity - self.velocity) / 2))
                 if self.velocity > distance_to_next:
                     self.velocity = distance_to_next
                 elif self.velocity > self.max_velocity:
@@ -67,13 +80,59 @@ class CarAgent(Agent):
         self.move(next_path)
 
     def move(self, next_path):
-        if self.pos_i + self.velocity >= len(self.path):  # remove agent because it reached the edge
+        # remove agent because it reached the edge
+        if self.pos_i + self.velocity >= len(self.path):
             self.destroy()
         elif self.velocity > 0:
             self.model.grid.move_agent(self, next_path[self.velocity-1])
             self.pos_i += self.velocity
         else:
             pass
+
+    def update_congestion(self):
+        self.velocity_sum += self.velocity
+        self.max_velocity_sum += self.max_velocity
+        self.congestion = self.velocity_sum/self.max_velocity_sum
+        self.steps += 1
+
+    def update_haste(self):
+        haste_probability = (self.velocity_sum/self.steps)/self.max_velocity
+
+        if self.steps > 10:
+            if self.congestion < self.tolerance and np.random.uniform() < haste_probability:  # substitute with threshold_1
+                self.haste = 1
+                self.max_velocity = self.max_velocity + \
+                    int(np.ceil(self.max_velocity * 0.25))
+                if self.velocity > self.max_velocity:
+                    self.velocity = self.max_velocity
+
+            else:
+                if self.haste != 0:
+                    self.haste = 0
+                    self.max_velocity = 5
+                    if self.velocity > self.max_velocity:
+                        self.velocity = self.max_velocity
+
+    def update_type(self):
+        if np.random.uniform() < 0.10:
+            if np.random.uniform() < 0.3:
+                # Patient
+                self.max_velocity = self.max_velocity - 1
+                self.tolerance_1 = self.tolerance_1 + 0.1
+                self.tolerance_2 = self.tolerance_2 + 0.15
+                if self.velocity > self.max_velocity:
+                        self.velocity = self.max_velocity
+                return 1
+            else:
+                # Inpatient
+                self.max_velocity = self.max_velocity + 2
+                self.tolerance_1 = self.tolerance_1 - 0.1
+                self.tolerance_2 = self.tolerance_2 - 0.15
+                if self.velocity > self.max_velocity:
+                        self.velocity = self.max_velocity
+                return 2
+        else:
+            return 0
 
 
 class BuildingAgent(Agent):
@@ -83,7 +142,7 @@ class BuildingAgent(Agent):
 
 
 class IntersectionAgent(Agent):
-    def __init__(self, unique_id, model, pos, green_duration):
+    def __init__(self, unique_id, model, pos, green_light_duration):
         super().__init__(unique_id, model)
         self.model = model
         self.unique_id = unique_id
@@ -95,16 +154,14 @@ class IntersectionAgent(Agent):
                                    (pos[0], pos[1] + 2)]
         self.traffic_lights = []
         for i in range(2):
-            tlight1 = TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[2*i], state=2)
-            tlight2 = TrafficLightAgent(self.model.get_new_unique_id(), self.model, traffic_light_positions[2*i+1], state=0)
+            tlight1 = TrafficLightAgent(self.model.get_new_unique_id(
+            ), self.model, traffic_light_positions[2*i], state=2)
+            tlight2 = TrafficLightAgent(self.model.get_new_unique_id(
+            ), self.model, traffic_light_positions[2*i+1], state=0)
             self.traffic_lights.append(tlight1)
             self.traffic_lights.append(tlight2)
 
-<<<<<<< HEAD
-        self.green_duration = 5
-=======
-        self.green_duration = green_duration
->>>>>>> bb0f43cc35997ae0229a6fe407735d5fda427cae
+        self.green_duration = green_light_duration
         self.yellow_duration = 2
 
     def step(self):
