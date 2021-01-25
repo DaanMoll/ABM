@@ -37,8 +37,7 @@ class CarAgent(Agent):
     def step(self):
         self.update_congestion()
         self.update_haste()
-        next_path = self.path[self.pos_i +
-                              1:self.pos_i + self.max_velocity + 1]
+        next_path = self.path[self.pos_i + 1:self.pos_i + self.max_velocity + 1]
         content: [TrafficLightAgent,
                   CarAgent] = self.model.grid.get_cell_list_contents(next_path)
         current = self.model.grid.get_cell_list_contents(self.pos)
@@ -49,8 +48,7 @@ class CarAgent(Agent):
                 self.velocity = 0
                 return
             else:
-                self.accelerate(
-                    int(np.ceil(self.max_velocity - self.velocity)/2))
+                self.accelerate(int(np.ceil(self.max_velocity - self.velocity)/2))
 
         if content:
             next_obj = content[0]

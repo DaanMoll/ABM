@@ -32,6 +32,7 @@ chart = ChartModule([
 
 max_car_agents = UserSettableParameter('slider', "Maximum number of Cars", 100, 10, 500, 1)
 cars_per_second = UserSettableParameter('slider', "Number of new Cars per second", 5, 0, 16, 1)
+max_velocity = UserSettableParameter('slider', "Maximum allowed velocity", 5, 1, 10, 1)
 green_light_duration = UserSettableParameter('slider', "Traffic Light green/red duration", 5, 1, 20, 1)
 
 grid = CanvasGrid(agent_portrayal, total_width, total_height, n_roads_horizontal * total_width+1, n_roads_vertical * total_height+1)
@@ -39,5 +40,6 @@ server = ModularServer(CityModel, [grid, chart], "City Model",
                        {  # UI Input params
                            'max_car_agents': max_car_agents,
                            'cars_per_second': cars_per_second,
-                           'green_light_duration': green_light_duration
+                           'green_light_duration': green_light_duration,
+                           'max_velocity': max_velocity
                         })
