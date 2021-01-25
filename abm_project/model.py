@@ -23,59 +23,58 @@ building_width = 20
 building_height = 20
 
 total_width = building_width * \
-    (n_roads_horizontal + 1) + n_roads_horizontal * road_width
+              (n_roads_horizontal + 1) + n_roads_horizontal * road_width
 total_height = building_height * \
-    (n_roads_vertical + 1) + n_roads_vertical * road_width
+               (n_roads_vertical + 1) + n_roads_vertical * road_width
 
 
 class CityModel(Model):
-    def __init__(self, max_car_agents=100, max_velocity=5, tolerance=1, green_light_duration=5):
+    def __init__(self, max_car_agents=100, cars_per_second=5, tolerance=1, green_light_duration=5):
         super().__init__()
-        self.unique_id = 0
-        self.schedule = BaseScheduler(self)
-        self.grid = MultiGrid(
-            width=total_width, height=total_height, torus=False)
-        road_pos = self.create_buildings()
-        # create buildings, then road map becasue it uses empty cell list
-        self.road_graph = self.create_road_graph()
-        # then create intersections otherwise graph doesnt work
-        # Currently still needed for traffic lights
-        self.agents = []
-        self.intersections = []
-        self.green_light_duration = green_light_duration
-        self.create_intersections()
 
-        self.starting_points = self.get_starting_points(
-            road_pos[1], road_pos[2])
-        self.end_points = self.get_end_points(road_pos[1], road_pos[2])
-        self.num_car_agents = 0
-
-        #parameters
         self.max_car_agents = max_car_agents
-        self.max_velocity = max_velocity
+        self.cars_per_second = cars_per_second
+        self.green_light_duration = green_light_duration
         self.tolerance = tolerance
 
-        for i in range(5):
-            self.create_car_agent()
+        self.agents = []
+        self.intersections = []
+        self.unique_id = 0
+        self.num_car_agents = 0
+        self.max_velocity = 5
 
         self.datacollector = DataCollector(model_reporters={
             "AverageCongestion": self.get_average_congestion,
             "HastePercent": self.get_average_haste
         })
 
-    def get_new_unique_id(self):
-        self.unique_id += 1
-        return self.unique_id
+        self.schedule = BaseScheduler(self)
+        self.grid = MultiGrid(width=total_width, height=total_height, torus=False)
+        self.road_graph, self.starting_points, self.end_points = self.initialize_grid()
 
+    @staticmethod
     def get_average_congestion(model):
         all_congestion = [agent.congestion for agent in model.schedule.agents if isinstance(
             agent, CarAgent)]
-        return 100 - 100*(sum(all_congestion)/len(all_congestion))
+        return 100 - 100 * (sum(all_congestion) / len(all_congestion))
 
+    @staticmethod
     def get_average_haste(model):
         all_haste = [agent.haste for agent in model.schedule.agents if isinstance(
             agent, CarAgent)]
         return 100 * np.mean(all_haste)
+
+    def get_new_unique_id(self):
+        self.unique_id += 1
+        return self.unique_id
+
+    def initialize_grid(self):
+        road_pos = self.create_buildings()
+        road_graph = self.create_road_graph()
+        self.create_intersections()
+        starting_points = self.get_starting_points(road_pos[1], road_pos[2])
+        end_points = self.get_end_points(road_pos[1], road_pos[2])
+        return road_graph, starting_points, end_points
 
     def create_buildings(self):
         """
@@ -84,10 +83,10 @@ class CityModel(Model):
 
         road_pos_x = [building_width * i + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)] + \
                      [building_width * i + 1 + road_width *
-                         (i - 1) for i in range(1, n_roads_horizontal + 1)]
+                      (i - 1) for i in range(1, n_roads_horizontal + 1)]
         road_pos_y = [building_height * i + road_width * (i - 1) for i in range(1, n_roads_vertical + 1)] + \
                      [building_height * i + 1 + road_width *
-                         (i - 1) for i in range(1, n_roads_vertical + 1)]
+                      (i - 1) for i in range(1, n_roads_vertical + 1)]
         road_pos = set(road_pos_x + road_pos_y)
 
         for x, y in self.grid.empties.copy():
@@ -107,8 +106,10 @@ class CityModel(Model):
                             for x in intersection_pos_x for y in intersection_pos_y)
 
         for intersection_pos in intersections:
-            intersection = IntersectionAgent(
-                unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos, green_light_duration=self.green_light_duration)
+            intersection = IntersectionAgent(unique_id=self.get_new_unique_id(),
+                                             model=self,
+                                             pos=intersection_pos,
+                                             green_light_duration=self.green_light_duration)
             self.intersections.append(intersection)
             self.schedule.add(intersection)
 
@@ -164,7 +165,7 @@ class CityModel(Model):
     def step(self):
         self.schedule.step()
         if self.num_car_agents < self.max_car_agents:
-            for _ in range(5):
+            for _ in range(self.cars_per_second):
                 self.create_car_agent()
         self.datacollector.collect(self)
 
@@ -208,28 +209,23 @@ class CityModel(Model):
         return graph
 
 
-if __name__ == '__main__':
-    model = CityModel(max_velocity=5, green_light_duration=5,
-                      max_car_agents=100, tolerance=0.45)
-    model.step()
-
-
-def run_experiment(number_iterations, max_steps, experiment_name, max_velocity, green_light_duration, max_cars_agents, tolerance):
-    ''' Takes:
+def run_experiment(number_iterations, max_steps, experiment_name, green_light_duration, max_cars_agents,
+                   tolerance):
+    """ Takes:
         number of runs, maximum steps per run and experiment name +
         parameters (max_velocity, green_light_duration,green_light_duration, max_cars_agents, tolerance)
 
         Outputs a list with all the runs congestions data, with the last element of the list being the model parameters,
-        Saves the output as "experiment_name.p" and returns it'''
+        Saves the output as "experiment_name.p" and returns it
+    """
 
     all_data = []
     for i in tqdm(range(number_iterations)):
-        model = CityModel(max_velocity=max_velocity, green_light_duration=green_light_duration,
-                          max_car_agents=max_cars_agents, tolerance=tolerance)
+        model = CityModel(green_light_duration=green_light_duration, max_car_agents=max_cars_agents, tolerance=tolerance)
         for _ in range(max_steps):
             model.step()
 
-     #Returns a pandas.DataFrame
+        # Returns a pandas.DataFrame
         data = model.datacollector.get_model_vars_dataframe()
         data = data.iloc[:, 0].values.tolist()
         all_data.append(data)
@@ -240,21 +236,11 @@ def run_experiment(number_iterations, max_steps, experiment_name, max_velocity, 
         "tolerance": model.tolerance
     }
     all_data.append(parameters)
-    #The final output is a list with all of the congestion data from each run,
-    #in a list object, and the parameters of the run as the last item of the list, in a dic
-    name = experiment_name+".p"
+    # The final output is a list with all of the congestion data from each run,
+    # in a list object, and the parameters of the run as the last item of the list, in a dic
+    name = experiment_name + ".p"
     pickle.dump(all_data, open(name, "wb"))
     return all_data
-
-
-#demo plot
-
-run_experiment(100,00,"test_data",5,5,100,0.45)
-all_data = pickle.load(open("test_data.p", "rb"))
-for data in all_data:
-    if isinstance(data, list):
-        plt.plot(data[10:len(data)])
-plt.show()
 
 
 def stats(data):
@@ -263,16 +249,30 @@ def stats(data):
     counter = 0
     all_grid_lock = []
     for l in data[0:-1]:
-        if l[-2] > mean+std:
+        if l[-2] > mean + std:
             counter += 1
             all_grid_lock.append(l)
     mean_lock = np.average(all_grid_lock)
     print("Mean: ", mean, "Std: ", std, "Mean Jam: ",
-          mean_lock, "Number of jams: ", counter, "-", counter/len(data[0:-1]), "%")
+          mean_lock, "Number of jams: ", counter, "-", counter / len(data[0:-1]), "%")
     return all_grid_lock
 
 
-locks = stats(all_data)
-for data in locks:
-    plt.plot(data)
-plt.show()
+if __name__ == '__main__':
+    experiment_name = "test_data"
+    run_experiment(number_iterations=100,
+                   max_steps=100,
+                   experiment_name=experiment_name,
+                   green_light_duration=5,
+                   max_cars_agents=100,
+                   tolerance=0.45)
+    all_data = pickle.load(open(experiment_name + ".pkl", "rb"))
+    for _data in all_data:
+        if isinstance(_data, list):
+            plt.plot(_data[10:len(_data)])
+    plt.show()
+
+    locks = stats(all_data)
+    for _data in locks:
+        plt.plot(_data)
+    plt.show()
