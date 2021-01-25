@@ -52,16 +52,12 @@ class CityModel(Model):
         self.grid = MultiGrid(width=total_width, height=total_height, torus=False)
         self.road_graph, self.starting_points, self.end_points = self.initialize_grid()
 
-    @staticmethod
-    def get_average_congestion(model):
-        all_congestion = [agent.congestion for agent in model.schedule.agents if isinstance(
-            agent, CarAgent)]
+    def get_average_congestion(self):
+        all_congestion = [agent.congestion for agent in self.schedule.agents if isinstance(agent, CarAgent)]
         return 100 - 100 * (sum(all_congestion) / len(all_congestion))
 
-    @staticmethod
-    def get_average_haste(model):
-        all_haste = [agent.haste for agent in model.schedule.agents if isinstance(
-            agent, CarAgent)]
+    def get_average_haste(self):
+        all_haste = [agent.haste for agent in self.schedule.agents if isinstance(agent, CarAgent)]
         return 100 * np.mean(all_haste)
 
     def get_new_unique_id(self):
