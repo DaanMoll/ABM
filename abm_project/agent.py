@@ -82,7 +82,7 @@ class BuildingAgent(Agent):
 
 
 class IntersectionAgent(Agent):
-    def __init__(self, unique_id, model, pos):
+    def __init__(self, unique_id, model, pos, green_duration):
         super().__init__(unique_id, model)
         self.model = model
         self.unique_id = unique_id
@@ -99,7 +99,11 @@ class IntersectionAgent(Agent):
             self.traffic_lights.append(tlight1)
             self.traffic_lights.append(tlight2)
 
+<<<<<<< HEAD
         self.green_duration = 5
+=======
+        self.green_duration = green_duration
+>>>>>>> bb0f43cc35997ae0229a6fe407735d5fda427cae
         self.yellow_duration = 2
 
     def step(self):

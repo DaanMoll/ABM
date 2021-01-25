@@ -23,32 +23,33 @@ total_height = building_height * (n_roads_vertical + 1) + n_roads_vertical * roa
 
 
 class CityModel(Model):
-    def __init__(self):
+    def __init__(self, max_car_agents=100, cars_per_second=5, tl_green_duration=5):
         super().__init__()
-        self.unique_id = 0
-        self.schedule = BaseScheduler(self)
-        self.grid = MultiGrid(width=total_width, height=total_height, torus=False)
-        road_pos = self.create_buildings()
-        # create buildings, then road map becasue it uses empty cell list
-        self.road_graph = self.create_road_graph()
-        # then create intersections otherwise graph doesnt work
-        # Currently still needed for traffic lights
+
+        self.max_car_agents = max_car_agents
+        self.cars_per_second = cars_per_second
+        self.tl_green_duration = tl_green_duration
+
         self.agents = []
         self.intersections = []
-        self.create_intersections()
-
-        self.starting_points = self.get_starting_points(road_pos[1], road_pos[2])
-        self.end_points = self.get_end_points(road_pos[1], road_pos[2])
-        self.max_car_agents = 100
+        self.unique_id = 0
         self.num_car_agents = 0
 
-        for _ in range(5):
-            self.create_car_agent()
-
+        self.schedule = BaseScheduler(self)
+        self.grid = MultiGrid(width=total_width, height=total_height, torus=False)
+        self.road_graph, self.starting_points, self.end_points = self.initialize_grid()
 
     def get_new_unique_id(self):
         self.unique_id += 1
         return self.unique_id
+
+    def initialize_grid(self):
+        road_pos = self.create_buildings()
+        road_graph = self.create_road_graph()
+        self.create_intersections()
+        starting_points = self.get_starting_points(road_pos[1], road_pos[2])
+        end_points = self.get_end_points(road_pos[1], road_pos[2])
+        return road_graph, starting_points, end_points
 
     def create_buildings(self):
         """
@@ -65,7 +66,7 @@ class CityModel(Model):
             if not (x in road_pos or y in road_pos):  # not a road -> place building
                 building = BuildingAgent(unique_id=self.get_new_unique_id(), model=self, pos=(x, y))
                 self.grid.place_agent(building, pos=(x, y))
-        
+
         return road_pos, road_pos_x, road_pos_y
 
     def create_intersections(self):
@@ -74,7 +75,10 @@ class CityModel(Model):
         intersections = set((x, y) for x in intersection_pos_x for y in intersection_pos_y)
 
         for intersection_pos in intersections:
-            intersection = IntersectionAgent(unique_id=self.get_new_unique_id(), model=self, pos=intersection_pos)
+            intersection = IntersectionAgent(unique_id=self.get_new_unique_id(),
+                                             model=self,
+                                             pos=intersection_pos,
+                                             green_duration=self.tl_green_duration)
             self.intersections.append(intersection)
             self.schedule.add(intersection)
 
@@ -122,7 +126,7 @@ class CityModel(Model):
     def step(self):
         self.schedule.step()
         if self.num_car_agents < self.max_car_agents:
-            for _ in range(5):
+            for _ in range(self.cars_per_second):
                 self.create_car_agent()
 
     def create_road_graph(self, draw=False):
