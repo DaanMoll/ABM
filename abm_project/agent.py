@@ -99,8 +99,7 @@ class CarAgent(Agent):
         if self.steps > 10:
             if self.congestion < self.tolerance and np.random.uniform() < haste_probability:  # substitute with threshold_1
                 self.haste = 1
-                self.max_velocity = self.max_velocity + \
-                    int(np.ceil(self.max_velocity * 0.25))
+                self.max_velocity = self.max_velocity + int(np.ceil(self.max_velocity * 0.25))
                 if self.velocity > self.max_velocity:
                     self.velocity = self.max_velocity
 
