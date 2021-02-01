@@ -3,6 +3,7 @@ __pycache__/
 .idea
 *.py[cod]
 *$py.class
+.DS_Store
 
 # C extensions
 *.so
@@ -141,3 +142,4 @@ parameters.md
 testing.py
 delete.md
 ter.py
+.DS_Store

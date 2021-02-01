@@ -1,24 +1,25 @@
-# ABM Plan
+## ABM - the performance of traffic flow with MESA
 
-1. Topic: Agent based optimization of traffic flow
+This traffic model is built with MESA package with python. We simulate the movement of cars on a road network in a grid model, traffic lights were placed at each intersection and the cars will stop when the traffic light turns red. The pathway is random. 
 
-2. experiment plan: Traffic simulation
+# How to use:
 
-Parameters:
-- Square grid, 2-way roads
-- Roads with different speed limits (maybe calculate path with minimal time using weighted graph)
-- Traffic lights
-- Individual haste(?) meter - willingness to go over the speed limit, 
+A simulation is under abm_project folder.
 
-metrics:
-- time spent standing still
-- average velocity (path length / total time taken)
+There are four parameters in our model that can be adjusted: 
+- maximum number of cars
 - traffic light duration
-- congestion (? might be difficult, not sure)
-- number of agents
+- maximum speed
+- tolerance level 
 
-3. references:
+# What to expect:
 
-- chapter 31 urban road traffic : http://www.casa.ucl.ac.uk/ABM.pdf
-- taxi model : https://github.com/rafael-bianchi/MAI-SOAS
-- different parameters of traffic abm : https://www.researchgate.net/publication/224136839_An_agent_based_approach_for_modeling_traffic_flow
+The simulation shows the average congestion level and the haste level, the more cars being put into the simulation, the likely it will get a high congestion. THis may cause a gridlock, where the cars are not able to move anymore.
+
+
+# References:
+MESA: Grimm, Volker, Eloy Revilla, Uta Berger, Florian Jeltsch, Wolf M. Mooij, Steven F. Railsback, Hans-Hermann Thulke, Jacob Weiner, Thorsten Wiegand, and Donald L. DeAngelis. 2005. “Pattern-Oriented Modeling of Agent Based Complex Systems: Lessons from Ecology.” American Association for the Advancement of Science 310 (5750): 987–91. doi:10.1126/science.1116681.
+
+Hunt, Andrew, and David Thomas. 2010. The Pragmatic Progammer: From Journeyman to Master. Reading, Massachusetts: Addison-Wesley.
+
+Leek, Jeffrey T., and Roger D. Peng. 2015. “Reproducible Research Can Still Be Wrong: Adopting a Prevention Approach.” Proceedings of the National Academy of Sciences 112 (6): 1645–46. doi:10.1073/pnas.1421412111.
