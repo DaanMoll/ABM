@@ -14,6 +14,23 @@ from mesa.datacollection import DataCollector
 from scipy.spatial.distance import euclidean
 from agent import CarAgent, BuildingAgent, IntersectionAgent
 
+'''
+
+This file describes the main model, CityModel, and all its functions:
+
+- Intersection, building and car agent creators as well road graph creator
+- Grid initializer
+- Road graph generator
+- Data collector functions
+
+Usage:
+
+- Instantiate the model using model = CityModel(green_light_duration=gld, max_car_agents=max_cars_agents,
+                              tolerance=tolerance)
+- Run the model for a desired number of steps using model.step()
+- Collect the output: data = model.datacollector.get_model_vars_dataframe()
+'''
+
 n_roads_horizontal = 4
 n_roads_vertical = 4
 
@@ -32,6 +49,17 @@ np.random.seed(1)
 
 
 class CityModel(Model):
+    ''' Creates a City Model
+
+    Arguments:
+        max_car_agents: maximum amount of cars in the grid at a given time step
+        cars_per_second: amount of cars that enter the grid per second until max_car_agents is reached
+        max_velocity: starting maximum velocity for car agents
+        tolerance: congestion threshold that will cause a caragent to be "hasty"
+        green_light_duration: amount of steps a given traffic light agent will stay red or green
+
+    The model collects "AverageCongestion" and "HastePercent" at each step, which can be retrieved through model.datacollector.get_model_vars_dataframe()
+    '''
     def __init__(self, max_car_agents=100, cars_per_second=5, max_velocity=5, tolerance=1, green_light_duration=5):
         super().__init__()
         self.max_car_agents = max_car_agents
@@ -161,6 +189,9 @@ class CityModel(Model):
         self.num_car_agents += 1
 
     def step(self):
+        ''' Advances the model by one step and if the maximum amount of car agents hasn't been reached 
+        car_per_second agents will be generated'''
+
         self.schedule.step()
         if self.num_car_agents < self.max_car_agents:
             for _ in range(self.cars_per_second):

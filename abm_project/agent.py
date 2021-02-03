@@ -2,8 +2,33 @@ from mesa import Agent
 
 import numpy as np
 
+'''
+This module describes the main agents used in CityModel:
+
+- CarAgent
+- BuildingAgent
+- TrafficLightAgent
+- IntersectionAgent
+
+'''
+
 
 class CarAgent(Agent):
+    '''
+    Creates a car agent inside the model grid.
+
+    Arguments:
+        - unique_id: car identifier
+        - path: random optimal path calculated at birth
+        - max_velocity: model level maximum velocity
+        - tolerance: model level congestion tolerance
+
+    Aditionally the folllowing parameters will be modified during execution:
+        - congestion: congestion level calculated as velocity_sum/max_velocity_sum at each step
+        - haste: 0 if not hasty, 1 if hasty
+        - steps: amount of step an agent resides within the grid
+
+    '''
     def __init__(self, model, unique_id, path, max_velocity, tolerance):
         super().__init__(unique_id, model)
         self.path = path
@@ -35,6 +60,18 @@ class CarAgent(Agent):
         self.model.num_car_agents -= 1
 
     def step(self):
+        '''
+        At each step the car agent updates its congestion level, checks if it is to become hasty
+        and retrieves its next position in the path.
+
+        Aditionally, the agent checks if there is a red traffic light agent, if True the agent stops; if False, the agent
+        accelerates.
+
+        Next the agent checks its distance relative to surrounding cars, if it is closer to a neighbouring car
+        than it's velocity, the agent will decelarate.
+
+         Finally, if the aagent has not been stopped, it moves to its next position.
+        '''
         self.update_congestion()
         self.update_haste()
         next_path = self.path[self.pos_i + 1:self.pos_i + self.max_velocity + 1]
@@ -56,11 +93,11 @@ class CarAgent(Agent):
             if isinstance(next_obj, TrafficLightAgent):
                 if len(content) > 1:
                     next_car = content[1]
-                    if next_car.pos == next_obj.pos:  # next car is on traffic light
+                    if next_car.pos == next_obj.pos:
                         distance_to_next -= 1
                 traffic_light = True
 
-            if self.velocity > 0 and distance_to_next <= self.velocity:  # decelerate based on the closest car
+            if self.velocity > 0 and distance_to_next <= self.velocity:
                 if traffic_light:
                     distance_to_next += 1
                 self.decelerate(distance_to_next)
@@ -97,7 +134,7 @@ class CarAgent(Agent):
         haste_probability = (self.velocity_sum/self.steps)/self.max_velocity
 
         if self.steps > 10:
-            if self.congestion < self.tolerance and np.random.uniform() < haste_probability:  # substitute with threshold_1
+            if self.congestion < self.tolerance and np.random.uniform() < haste_probability:
                 self.haste = 1
                 self.max_velocity = self.max_velocity + int(np.ceil(self.max_velocity * 0.25))
                 if self.velocity > self.max_velocity:
@@ -133,12 +170,24 @@ class CarAgent(Agent):
 
 
 class BuildingAgent(Agent):
+    ''' Creates a building agent whose only attributes are a unique_id and its position:
+        - pos: (x,y) coordinates in the model grid
+    '''
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
         self.pos = pos
 
 
 class IntersectionAgent(Agent):
+    '''
+    Creates an intersection agent, where the traffic lights live.
+
+    Arguments:
+     - unique_id: agents' identifier
+     - pos: (x,y) coordinates in the model grid
+     - green_light_duration: duration of green/red light for a given TrafficLightAgent inside the IntersectionAgent
+
+    '''
     def __init__(self, unique_id, model, pos, green_light_duration):
         super().__init__(unique_id, model)
         self.model = model
@@ -180,6 +229,14 @@ class IntersectionAgent(Agent):
 
 
 class TrafficLightAgent(Agent):
+    '''
+    Creates a traffic light inside the model grid.
+
+    Arguments:
+        - unique_id: agents' identifier
+        - pos: (x,y) coordinates in the model grid
+        - state: 0 if green, 1 if yellow, 2 if red
+    '''
     def __init__(self, unique_id, model, pos, state):
         super().__init__(unique_id, model)
         self.colors = {0: 'green', 1: 'yellow', 2: 'red'}
