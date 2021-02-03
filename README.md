@@ -1,20 +1,22 @@
 ## ABM - the performance of traffic flow with MESA
 
-This traffic model is built with MESA package with python. We simulate the movement of cars on a road network in a grid model, traffic lights were placed at each intersection and the cars will stop when the traffic light turns red. The pathway is random. 
+This agent based traffic model is built using the MESA package in python. We simulate the movement of cars on a road network using a grid model. Cars drive random optimal paths, stopping when they are too close to other cars or when they encounter a red traffic light. Traffic lights were placed at each intersection. Aditionally, when a car experiences a high level of congestion (calculated as the ratio of its cumulative speed and maximum speed) it enters a *hasty* state, causing the agent to driver over the speed limit. The model output measured is the average congestion experienced by agents.
 
 # How to use:
 
-A simulation is under abm_project folder.
+All simulation files are under the ```abm_project``` folder.
 
 There are four parameters in our model that can be adjusted: 
 - maximum number of cars
 - traffic light duration
 - maximum speed
-- tolerance level 
+- haste tolerance level
+
+Executing ```run.py``` will open the simulation as a browser window, where the model parameters can be tweaked using sliders.
 
 # What to expect:
 
-The simulation shows the average congestion level and the haste level, the more cars being put into the simulation, the likely it will get a high congestion. THis may cause a gridlock, where the cars are not able to move anymore.
+The simulation shows the average congestion level and the haste level, the more cars being put into the simulation, the likely it will get a high congestion. This may cause a gridlock, where the cars are not able to move anymore.
 
 
 # References:
