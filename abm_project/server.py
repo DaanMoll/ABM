@@ -1,10 +1,13 @@
 from mesa.visualization.UserParam import UserSettableParameter
-
 from model import *
 from agent import BuildingAgent, CarAgent, TrafficLightAgent
 from mesa.visualization.modules import CanvasGrid, ChartModule
 from mesa.visualization.ModularVisualization import ModularServer
 
+'''
+This script describes the agents visual characteristic used in the browser animation (agent_portrayal) as well
+as initializes the animation (server), creating a grid (grid) and a set of charts tracking model output (chart)
+'''
 
 def agent_portrayal(agent):
     portrayal = {"Shape": "rect",

@@ -1,18 +1,35 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
+import pandas as pd
 import pickle
+import random
 
 from tqdm import tqdm
 from mesa import Model
 from mesa.space import SingleGrid, MultiGrid
 from mesa.time import BaseScheduler
 from mesa.datacollection import DataCollector
-from numpy.lib.function_base import average
 from scipy.spatial.distance import euclidean
 from agent import CarAgent, BuildingAgent, IntersectionAgent
-from mesa.datacollection import DataCollector
-import random
+
+'''
+
+This file describes the main model, CityModel, and all its functions:
+
+- Intersection, building and car agent creators as well road graph creator
+- Grid initializer
+- Road graph generator
+- Data collector functions
+
+Usage:
+
+- Instantiate the model using model = CityModel(green_light_duration=gld, max_car_agents=max_cars_agents,
+                              tolerance=tolerance)
+- Run the model for a desired number of steps using model.step()
+- Collect the output: data = model.datacollector.get_model_vars_dataframe()
+'''
 
 n_roads_horizontal = 4
 n_roads_vertical = 4
@@ -27,8 +44,22 @@ total_width = building_width * \
 total_height = building_height * \
                (n_roads_vertical + 1) + n_roads_vertical * road_width
 
+random.seed(1)
+np.random.seed(1)
+
 
 class CityModel(Model):
+    ''' Creates a City Model
+
+    Arguments:
+        max_car_agents: maximum amount of cars in the grid at a given time step
+        cars_per_second: amount of cars that enter the grid per second until max_car_agents is reached
+        max_velocity: starting maximum velocity for car agents
+        tolerance: congestion threshold that will cause a caragent to be "hasty"
+        green_light_duration: amount of steps a given traffic light agent will stay red or green
+
+    The model collects "AverageCongestion" and "HastePercent" at each step, which can be retrieved through model.datacollector.get_model_vars_dataframe()
+    '''
     def __init__(self, max_car_agents=100, cars_per_second=5, max_velocity=5, tolerance=1, green_light_duration=5):
         super().__init__()
         self.max_car_agents = max_car_agents
@@ -75,7 +106,6 @@ class CityModel(Model):
         """
         Populates area between roads with buildings.
         """
-
         road_pos_x = [building_width * i + road_width * (i - 1) for i in range(1, n_roads_horizontal + 1)] + \
                      [building_width * i + 1 + road_width *
                       (i - 1) for i in range(1, n_roads_horizontal + 1)]
@@ -114,6 +144,9 @@ class CityModel(Model):
                 self.agents.append(traffic_light)
 
     def get_starting_points(self, road_pos_x, road_pos_y):
+        """
+        Create points of entry on the grid for the car agents 
+        """
         starting_points_top = [(x, self.grid.height - 1)
                                for x in road_pos_x if x % 2 == 0]
         starting_points_bottom = [(x, 0) for x in road_pos_x if x % 2 != 0]
@@ -125,6 +158,9 @@ class CityModel(Model):
         return starting_points_top + starting_points_bottom + starting_points_left + starting_points_right
 
     def get_end_points(self, road_pos_x, road_pos_y):
+        """
+        Create points of exit on the grid for the car agents
+        """
         end_points_top = [(x, self.grid.height - 1)
                           for x in road_pos_x if x % 2 != 0]
         end_points_bottom = [(x, 0) for x in road_pos_x if x % 2 == 0]
@@ -136,6 +172,11 @@ class CityModel(Model):
         return end_points_top + end_points_bottom + end_points_left + end_points_right
 
     def create_car_agent(self):
+        """
+        Creates a new agent, 
+        Picks a random starting point and ending point,
+        Picks random shortest path and places agent.
+        """
         start_point = random.choice(self.starting_points)
         # if the starting cell is not empty, pick a new one
         while not self.grid.is_cell_empty(start_point):
@@ -158,6 +199,9 @@ class CityModel(Model):
         self.num_car_agents += 1
 
     def step(self):
+        ''' Advances the model by one step and if the maximum amount of car agents hasn't been reached 
+        car_per_second agents will be generated'''
+
         self.schedule.step()
         if self.num_car_agents < self.max_car_agents:
             for _ in range(self.cars_per_second):
@@ -165,6 +209,9 @@ class CityModel(Model):
         self.datacollector.collect(self)
 
     def create_road_graph(self, draw=False):
+        """
+        Create the roads on where the car agents can drive on.
+        """
         graph = nx.DiGraph()
 
         roads = list(self.grid.empties)
@@ -213,28 +260,25 @@ def run_experiment(number_iterations, max_steps, experiment_name, green_light_du
         Outputs a list with all the runs congestions data, with the last element of the list being the model parameters,
         Saves the output as "experiment_name.p" and returns it
     """
+    tolerances = [0, 0.25, 0.5, 0.75, 1]
+    car_agents = [10, 20, 50, 100, 200]
+    green_light_duration = [2, 3, 5, 7, 8]
+    all_data = [green_light_duration]
+    for gld in green_light_duration:
+        for _ in tqdm(range(number_iterations)):
+            model = CityModel(green_light_duration=gld, max_car_agents=max_cars_agents,
+                              tolerance=tolerance)
+            for _ in range(max_steps):
+                model.step()
 
-    all_data = []
-    for i in tqdm(range(number_iterations)):
-        model = CityModel(green_light_duration=green_light_duration, max_car_agents=max_cars_agents,
-                          tolerance=tolerance)
-        for _ in range(max_steps):
-            model.step()
+            # Returns a pandas.DataFrame
+            data = model.datacollector.get_model_vars_dataframe()
+            data = data.iloc[:, 0].values
+            all_data.append(data)
 
-        # Returns a pandas.DataFrame
-        data = model.datacollector.get_model_vars_dataframe()
-        data = data.iloc[:, 0].values.tolist()
-        all_data.append(data)
-    parameters = {
-        "max_cars": model.max_car_agents,
-        "max_speed": model.max_velocity,
-        "green_light_duration": model.green_light_duration,
-        "tolerance": model.tolerance
-    }
-    all_data.append(parameters)
     # The final output is a list with all of the congestion data from each run,
     # in a list object, and the parameters of the run as the last item of the list, in a dic
-    name = experiment_name + ".p"
+    name = experiment_name + ".pickle"
     pickle.dump(all_data, open(name, "wb"))
     return all_data
 
@@ -255,22 +299,46 @@ def stats(data):
 
 
 def main():
-    experiment_name = "test_data"
-    run_experiment(number_iterations=100,
-                   max_steps=100,
-                   experiment_name=experiment_name,
-                   green_light_duration=5,
-                   max_cars_agents=100,
-                   tolerance=0.45)
-    all_data = pickle.load(open(experiment_name + ".pkl", "rb"))
-    for _data in all_data:
-        if isinstance(_data, list):
-            plt.plot(_data[10:len(_data)])
-    plt.show()
+    iterations = 1000
+    steps = 1000
+    green_light_duration = ""
+    max_car_agents = 150
+    tolerance = 0.2
 
-    locks = stats(all_data)
-    for _data in locks:
-        plt.plot(_data)
+    experiment_name = f'data_i{iterations}_s{steps}_gld{green_light_duration}_mca{max_car_agents}_t{str(tolerance).replace(".", "")}'
+    print(experiment_name)
+    run_experiment(number_iterations=iterations,
+                   max_steps=steps,
+                   experiment_name=experiment_name,
+                   green_light_duration=green_light_duration,
+                   max_cars_agents=max_car_agents,
+                   tolerance=tolerance)
+    all_data = pickle.load(open(experiment_name + ".pickle", "rb"))
+    # for _data in all_data:
+    #     if isinstance(_data, list):
+    #         plt.plot(_data[10:len(_data)])
+    # plt.show()
+    #
+    # locks = stats(all_data)
+    # for _data in locks:
+    #     plt.plot(_data)
+    # plt.show()
+
+    car_agents = all_data.pop(0)
+    all_data = np.array(all_data).reshape((len(car_agents), iterations, steps))
+    for i, data_var in enumerate(all_data):
+        mean = np.mean(data_var, axis=0)
+        std = np.std(data_var, axis=0)
+        xs = range(mean.size)
+
+        plt.plot(xs, mean, label=car_agents[i])
+        plt.fill_between(xs, mean - std, mean + std, alpha=0.2)
+    plt.xlabel("Timesteps")
+    plt.ylabel("Congestion")
+    plt.title(f"{iterations} iterations, tolerance={tolerance}, green light duration = {green_light_duration}")
+    plt.xlim(xs[0], xs[-1]+1)
+    plt.ylim(0, 100)
+    plt.legend(title="max car agents")
     plt.show()
 
 
